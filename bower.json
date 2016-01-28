@@ -1,8 +1,8 @@
 {
-  "name": "at-rule-edit",
+  "name": "at-rule-engine",
   "private": true,
   "dependencies": {
     "polymer": "Polymer/polymer#0.8-preview"
   },
-  "version": "0.0.1.1"
+  "version": "0.0.1.2"
 }
