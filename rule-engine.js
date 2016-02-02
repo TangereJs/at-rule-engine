@@ -235,7 +235,7 @@ var global = this;
     var rulesExist = Boolean(rules) && Boolean(rules.length);
     if (!schemaExists || !rulesExist) {
       // console.log('Element <b>' + this.element + '</b> does not have any rules to validate');
-      return;
+      return complexValue;
     }
 
     var complexBusinessValue = {};
