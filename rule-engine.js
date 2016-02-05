@@ -601,6 +601,14 @@ var global = this;
               field.errorMessage = '';
             }
           });
+          var properties = Boolean(coreForm.schema.properties) ? coreForm.schema.properties : {};
+          var propertyNames = Object.keys(properties);
+          propertyNames.forEach(function (propertyName, index) {
+            var element = coreForm.getElement(propertyName);
+            if (element) {
+              element.errorMessage = "";
+            }
+          });
         }
       },
       alert: function(data) {
