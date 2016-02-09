@@ -420,8 +420,8 @@ var global = this;
       return;
     }
 
-    if (!this.actionsAdapter) {
-      this.actionsAdapter = this.coreFormActionsAdapter(this);
+    if (!this.adapterForRuleObj) {
+      this.adapterForRuleObj = {};
     }
 
     var newValue = event.detail.value;
@@ -434,7 +434,11 @@ var global = this;
       var self = this;
       rules.forEach(function(rule, index) {
         var ruleEngine = new RuleEngine(rule.rule);
-        var actionsAdapter = self.actionsAdapter;
+        var actionsAdapter = self.adapterForRuleObj[index];
+        if (actionsAdapter === undefined) {
+          actionsAdapter = self.coreFormActionsAdapter(self);
+          self.adapterForRuleObj[index] = actionsAdapter;
+        }
         ruleEngine.run(newValue, actionsAdapter, actionsAdapter.onNoTriggerOrError.bind(actionsAdapter));
       });
     }
@@ -573,42 +577,18 @@ var global = this;
   DataValidator.prototype.coreFormActionsAdapter = function(dataValidator) {
     var self = dataValidator;
     var coreForm = self.element;
-    var previousStates = {};
+    var undoActionsList = [];
 
     return {
       onNoTriggerOrError: function(error, result) {
         if (error || !result) {
           // revert the changes
-          var fieldIds = Object.keys(previousStates);
-          fieldIds.forEach(function(fieldId, index) {
-            var field = coreForm.getElement(fieldId);
-            var previousState = previousStates[fieldId];
-            var originalState = previousState.originalState;
-            if (originalState === "disabled") {
-              if (field.required) { field.required = false; }
-              if (field.hide) { field.hide = false; }
-            } else if (originalState === "required") {
-              if (field.disabled) { field.disabled = false; }
-              if (field.hide) { field.hide = false; }
-            } else if (originalState === "hide") {
-              if (field.disabled) { field.disabled = false; }
-              if (field.required) { field.required = false; }
-            }
-            // field[previousState.changedState] = false;
-            field[previousState.originalState] = true;
-
-            if (field.errorMessage !== undefined) {
-              field.errorMessage = '';
+          undoActionsList.forEach(function (action, index) {
+            if (action.execute !== undefined) {
+              action.execute();
             }
           });
-          var properties = Boolean(coreForm.schema.properties) ? coreForm.schema.properties : {};
-          var propertyNames = Object.keys(properties);
-          propertyNames.forEach(function (propertyName, index) {
-            var element = coreForm.getElement(propertyName);
-            if (element) {
-              element.errorMessage = "";
-            }
-          });
+          undoActionsList = [];
         }
       },
       alert: function(data) {
@@ -624,78 +604,124 @@ var global = this;
         if (val === "false") {
           val = false;
         }
-        if (self.element.updateFormElementData) {
-          self.element.updateFormElementData(fieldId, val);
-        } else if (self.element.updateFormElementValue) {
-          self.element.updateFormElementValue(fieldId, val);
-        }
+
+        var field = coreForm.getElement(fieldId);
+        var originalValue = field.value;
+        field.value = val;
+
+        // *ij* uncomment this when *ma* is ready for field value restoration
+        // var restoreFieldValueAction = restoreFieldValueAction(field, originalValue);
+        // undoActionsList.push(restoreFieldValueAction);
       },
       setFieldState: function(data) {
         var fieldId = data.fieldName;
         var val = data.state;
 
         var field =  self.element.getElement(fieldId);
-
-        var previousState = undefined;
-        if(previousStates[fieldId] === undefined) {
-          previousState = {
-            originalState: '',
-            changedState: ''
-          };
-          previousStates[fieldId] = previousState;
-        } else {
-          previousState = {
-            originalState: '',
-            changedState: ''
-          };
-        }
-
-        // set the name of the changedState
-        previousState.changedState = val;
-        if (val === 'hidden') {
-          previousState.changedState = 'hide';
-        }
+        var restoreFieldStateAction = false;
 
         if (field.disabled) {
           // previous state was disabled
-          previousState.originalState = 'disabled';
+          restoreFieldStateAction = RestoreFieldStateAction(field, 'disabled', true);
+          field.disabled = false;
         } else if (field.required) {
           // previous state was required
-          previousState.originalState = 'required';
+          restoreFieldStateAction = RestoreFieldStateAction(field, 'required', true);
+          field.required = false;
         } else if (field.hide) {
           // previous state was hide
-          previousState.originalState = 'hide'
+          restoreFieldStateAction = RestoreFieldStateAction(field, 'hide', true);
+          field.hide = false;
+        }
+        if (restoreFieldStateAction) {
+          undoActionsList.push(restoreFieldStateAction);
         }
 
-        field[previousState.originalState] = false;
+        restoreFieldStateAction = false;
         if (val === "disabled") {
           field.disabled = true;
+          restoreFieldStateAction = RestoreFieldStateAction(field, 'disabled', false);
         } else if (val === "required") {
           field.required = true;
-        } else if (val === "optional") {
-          field[previousState.originalState] = false;
+          restoreFieldStateAction = RestoreFieldStateAction(field, 'required', false);
         } else if (val === "hidden") {
           field.hide = true;
+          restoreFieldStateAction = RestoreFieldStateAction(field, 'hide', false);
+        }
+        if (restoreFieldStateAction) {
+          undoActionsList.push(restoreFieldStateAction);
         }
       },
       copyFieldValue: function(data) {
         var srcFieldId = data.fieldName;
         var destFieldId = data.copyTo;
-        if (self.element.data) {
-          var srcValue = self.element.data[srcFieldId];
-          self.element.updateFormElementData(destFieldId, srcValue);
-        } else if (self.element.value) {
-          var srcValue = self.element.value[srcFieldId];
-          self.element.updateFormElementValue(destFieldId, srcValue);
+        if (coreForm.data) {
+          var originalValue = coreForm.data[destFieldId];
+          var field = coreForm.getElement(destFieldId);
+          // *ij* uncomment this when *ma* is ready for field value restoration
+          // var restoreFieldValueAction = RestoreFieldValueAction(field, originalValue);
+          // undoActionsList.push(restoreFieldValueAction);
+
+          var srcValue = coreForm.data[srcFieldId];
+          coreForm.updateFormElementData(destFieldId, srcValue);
         }
+        //  else if (self.element.value) {
+        //   var srcValue = self.element.value[srcFieldId];
+        //   self.element.updateFormElementValue(destFieldId, srcValue);
+        // }
       },
       setFieldError: function (data) {
         var fieldId = data.fieldName;
         var errorMessage = data.errorMessage;
-        var field = self.element.getElement(fieldId);
-          if (field && field.errorMessage !== undefined) {
-            field.errorMessage = errorMessage;
-          }
+        var field = coreForm.getElement(fieldId);
+
+        if (field && field.errorMessage !== undefined) {
+          field.errorMessage = errorMessage;
+
+          var clearErrorMessageAction = ClearErrorMessageAction(field);
+          undoActionsList.push(clearErrorMessageAction);
+        }
+      }
+    }
+  };
+
+  var RestoreFieldValueAction = function(field, previousValue) {
+    // this is the field which value should be restored
+    var _field = field;
+    // this is the original value of the field that should be restored
+    var _previousValue = previousValue;
+
+    return {
+      execute: function () {
+        _field.value = _previousValue;
+      }
+    };
+  };
+
+  var RestoreFieldStateAction = function (field, stateName, stateValue) {
+    // this is the field which state should be restored
+    var _field = field;
+    // this is the value of the state should be restored
+    var _stateValue = stateValue;
+    // this is the name of the state that should be restored; name is one of 'required', 'disabled' or 'hide'
+    var _stateName = stateName;
+
+    return {
+      execute: function () {
+        _field[_stateName] = _stateValue;
+      }
+    }
+  };
+
+  var ClearErrorMessageAction = function (field) {
+    // this is the field on which error message should be cleared
+    var _field = field;
+
+    return {
+      execute: function () {
+        if (_field.errorMessage !== undefined) {
+          _field.errorMessage = "";
+        }
       }
     }
   };
