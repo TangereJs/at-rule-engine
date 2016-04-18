@@ -206,6 +206,189 @@ var global = this;
   }
 
   /**
+   * Updated code from AT-22 for AT-129
+   */
+
+  var DataRulesExecutor = global.DataRulesExecutor = function DataRulesExecutor() {
+    var _schema = false;
+    var _values = false;
+    var _ruleIndexToActionsAdapter = {};
+
+    function parseBool(value) {
+      var result = Boolean(value);
+      // Boolean("true") = true and Boolean("false") = true because Boolean("non empty string") = true
+      // so if value === "false" assign bool literal false
+      result = value === "false" ? false : result;
+
+      return result;
+    }
+
+    var _ActionsAdapter = function() {
+      var _undoActionsList = [];
+
+      return {
+        /**
+         * display the message in an alert
+         */
+        alert: function(data) {
+          alert(data.message);
+        },
+        /**
+         * update the _values object
+         */
+        updateField: function(data) {
+          var fieldId = data.fieldName;
+          var val = data.updateTo;
+
+          if (val === "true" || val === "false") {
+            val = parseBool(val);
+          }
+
+          var originalValue = _values[fieldId];
+          _values[fieldId] = val;
+
+          // *ij* uncomment this when *ma* is ready for field value restoration
+          // var restoreFieldValueAction = restoreFieldValueAction(field, originalValue);
+          // undoActionsList.push(restoreFieldValueAction);
+        },
+        /**
+         * updates the state in _schema
+         */
+        setFieldState: function(data) {
+          var fieldId = data.fieldName;
+          var val = data.state;
+
+          var field = _schema[fieldId];
+          var restoreFieldStateAction = false;
+
+          if (field.disabled) {
+            // previous state was disabled
+            restoreFieldStateAction = RestoreFieldStateAction(field, 'disabled', true);
+            field.disabled = false;
+          } else if (field.required) {
+            // previous state was required
+            restoreFieldStateAction = RestoreFieldStateAction(field, 'required', true);
+            field.required = false;
+          } else if (field.hide) {
+            // previous state was hide
+            restoreFieldStateAction = RestoreFieldStateAction(field, 'hide', true);
+            field.hide = false;
+          }
+          if (restoreFieldStateAction) {
+            _undoActionsList.push(restoreFieldStateAction);
+          }
+
+          restoreFieldStateAction = false;
+          if (val === "disabled") {
+            field.disabled = true;
+            restoreFieldStateAction = RestoreFieldStateAction(field, 'disabled', false);
+          } else if (val === "required") {
+            field.required = true;
+            restoreFieldStateAction = RestoreFieldStateAction(field, 'required', false);
+          } else if (val === "hidden") {
+            field.hide = true;
+            restoreFieldStateAction = RestoreFieldStateAction(field, 'hide', false);
+          }
+          if (restoreFieldStateAction) {
+            _undoActionsList.push(restoreFieldStateAction);
+          }
+        },
+        /**
+         * update the _values object
+         */
+        copyFieldValue: function(data) {
+          var srcFieldId = data.fieldName;
+          var destFieldId = data.copyTo;
+
+          var originalValue = _values[destFieldId];
+          // *ij* uncomment this when *ma* is ready for field value restoration
+          // var restoreFieldValueAction = RestoreFieldValueAction(field, originalValue);
+          // undoActionsList.push(restoreFieldValueAction);
+
+          var srcValue = _values[srcFieldId];
+          _values[destFieldId] = srcValue;
+        },
+        /**
+         * update the _schema object
+         */
+        setFieldError: function(data) {
+          var fieldId = data.fieldName;
+          var errorMessage = data.errorMessage;
+          var field = _schema[fieldId];
+
+          // there are elements that do not have error message like at-form-section
+          if (field.errorMessage !== undefined) {
+            field.errorMessage = errorMessage;
+
+            var clearErrorMessageAction = ClearErrorMessageAction(field);
+            _undoActionsList.push(clearErrorMessageAction);
+          }
+        },
+        /**
+         * when conditions are not satisfied undo the actions
+         */
+        onNoTriggerOrError: function(error, result) {
+          if (error || !result) {
+            // revert the changes
+            _undoActionsList.forEach(function(action, index) {
+              if (action.execute !== undefined) {
+                action.execute();
+              }
+            });
+            _undoActionsList = [];
+          }
+        }
+      }
+    };
+
+    // last validated data object as json string
+    var _lastValidatedData = "";
+
+    return {
+      /**
+       * @param schema - object that is required to contain properties
+       * @param values - object that holds value for each property in schema
+       * @param rules - array of {conditions, actions} objects that holds each rule that should be applied
+       */
+      execute: function(schema, values, rules) {
+        // validate parameters
+        var schemaExists = Boolean(schema) && Boolean(schema.properties);
+        var rulesExist = Boolean(rules) && Boolean(rules.length);
+        if (!schemaExists || !rulesExist) {
+          return;
+        }
+
+        _schema = schema;
+        _values = values;
+
+        var valuesJsonStr = JSON.stringify(values);
+        if (valuesJsonStr !== _lastValidatedData) {
+          // if values being validated are different from previous execute rules
+          _lastValidatedData = valuesJsonStr;
+
+          // for each rule create rule engine and run the conditions and actions
+          rules.forEach(function (rule, index) {
+            var adapter = false;
+            // see if actions adapter exists for this index
+            if (_ruleIndexToActionsAdapter[index] === undefined) {
+              // create new adapter
+              adapter = _ActionsAdapter();
+              _ruleIndexToActionsAdapter[index] = adapter;
+            } else {
+              // use existing one
+              adapter = _ruleIndexToActionsAdapter[index];
+            }
+
+            var ruleEngine = new RuleEngine(rule.rule);
+            ruleEngine.run(values, adapter, adapter.onNoTriggerOrError);
+          });
+        }
+      }
+    };
+  }
+
+
+  /**
    * Created for AT-22
    */
   var DataValidator = global.DataValidator = function DataValidator() {
@@ -230,7 +413,7 @@ var global = this;
     }
   };
 
-  DataValidator.prototype.validateComplexValue = function (complexValue, rules, element) {
+  DataValidator.prototype.validateComplexValue = function(complexValue, rules, element) {
     var schemaExists = Boolean(element.schema) && Boolean(element.schema.properties);
     var rulesExist = Boolean(rules) && Boolean(rules.length);
     if (!schemaExists || !rulesExist) {
@@ -261,12 +444,12 @@ var global = this;
   };
 
   function copyProperties(propertyNames, source, destination) {
-    propertyNames.forEach(function (property, index) {
+    propertyNames.forEach(function(property, index) {
       destination[property] = source[property];
     });
   }
 
-  DataValidator.prototype.validateArrayValue = function (arrayValue, rules, element) {
+  DataValidator.prototype.validateArrayValue = function(arrayValue, rules, element) {
     var arrayBusinessValue = [];
     var i;
     var aLen = arrayValue.length;
@@ -280,9 +463,9 @@ var global = this;
     }
     var j;
     var rLen = rules.length;
-    for (i=0; i < aLen; i++) {
+    for (i = 0; i < aLen; i++) {
       businessItem = arrayBusinessValue[i];
-      for(j=0; j <rLen; j++) {
+      for (j = 0; j < rLen; j++) {
         var rule = rules[j];
         var ruleEngine = new RuleEngine(rule.rule);
         var arrayActionsAdapter = this.arrayActionsAdapter(element, businessItem, i);
@@ -293,7 +476,7 @@ var global = this;
     return arrayBusinessValue;
   }
 
-  DataValidator.prototype.arrayActionsAdapter = function (element, arrayItemValue, itemPosition) {
+  DataValidator.prototype.arrayActionsAdapter = function(element, arrayItemValue, itemPosition) {
     var self = this;
     var formArray = element;
     var previousStates = {};
@@ -309,14 +492,26 @@ var global = this;
             var previousState = previousStates[fieldId];
             var originalState = previousState.originalState;
             if (originalState === "disabled") {
-              if (field.required) { field.required = false; }
-              if (field.hide) { field.hide = false; }
+              if (field.required) {
+                field.required = false;
+              }
+              if (field.hide) {
+                field.hide = false;
+              }
             } else if (originalState === "required") {
-              if (field.disabled) { field.disabled = false; }
-              if (field.hide) { field.hide = false; }
+              if (field.disabled) {
+                field.disabled = false;
+              }
+              if (field.hide) {
+                field.hide = false;
+              }
             } else if (originalState === "hide") {
-              if (field.disabled) { field.disabled = false; }
-              if (field.required) { field.required = false; }
+              if (field.disabled) {
+                field.disabled = false;
+              }
+              if (field.required) {
+                field.required = false;
+              }
             }
             // field[previousState.changedState] = false;
             field[previousState.originalState] = true;
@@ -350,7 +545,7 @@ var global = this;
         var field = complex.getElement(fieldId);
 
         var previousState = undefined;
-        if(previousStates[fieldId] === undefined) {
+        if (previousStates[fieldId] === undefined) {
           previousState = {
             originalState: '',
             changedState: ''
@@ -396,7 +591,7 @@ var global = this;
         var destFieldId = data.copyTo;
         arrayItemValue[destFieldId] = arrayItemValue[srcFieldId];
       },
-      setFieldError: function (data) {
+      setFieldError: function(data) {
         var fieldId = data.fieldName;
         var errorMessage = data.errorMessage;
         var complex = formArray._getElementFromForm(itemPosition);
@@ -449,7 +644,7 @@ var global = this;
     console.log('Not implemented yet.');
   };
 
-  DataValidator.prototype.complexActionsAdapter = function (element, complexValue) {
+  DataValidator.prototype.complexActionsAdapter = function(element, complexValue) {
     var previousStates = {};
     var coreForm = element;
 
@@ -463,21 +658,33 @@ var global = this;
             var previousState = previousStates[fieldId];
             var originalState = previousState.originalState;
             if (originalState === "disabled") {
-              if (field.required) { field.required = false; }
-              if (field.hide) { field.hide = false; }
+              if (field.required) {
+                field.required = false;
+              }
+              if (field.hide) {
+                field.hide = false;
+              }
             } else if (originalState === "required") {
-              if (field.disabled) { field.disabled = false; }
-              if (field.hide) { field.hide = false; }
+              if (field.disabled) {
+                field.disabled = false;
+              }
+              if (field.hide) {
+                field.hide = false;
+              }
             } else if (originalState === "hide") {
-              if (field.disabled) { field.disabled = false; }
-              if (field.required) { field.required = false; }
+              if (field.disabled) {
+                field.disabled = false;
+              }
+              if (field.required) {
+                field.required = false;
+              }
             }
             // field[previousState.changedState] = false;
             field[previousState.originalState] = true;
           });
 
           fieldIds = Object.keys(complexValue);
-          fieldIds.forEach(function (fieldId, index) {
+          fieldIds.forEach(function(fieldId, index) {
             var field = coreForm.getElement(fieldId);
             if (field && field.errorMessage !== undefined) {
               field.errorMessage = '';
@@ -508,10 +715,10 @@ var global = this;
         var fieldId = data.fieldName;
         var val = data.state;
 
-        var field =  coreForm.getElement(fieldId);
+        var field = coreForm.getElement(fieldId);
 
         var previousState = undefined;
-        if(previousStates[fieldId] === undefined) {
+        if (previousStates[fieldId] === undefined) {
           previousState = {
             originalState: '',
             changedState: ''
@@ -563,13 +770,13 @@ var global = this;
           coreForm.updateFormElementValue(destFieldId, srcValue);
         }
       },
-      setFieldError: function (data) {
+      setFieldError: function(data) {
         var fieldId = data.fieldName;
         var errorMessage = data.errorMessage;
         var field = coreForm.getElement(fieldId);
-          if (field && field.errorMessage !== undefined) {
-            field.errorMessage = errorMessage;
-          }
+        if (field && field.errorMessage !== undefined) {
+          field.errorMessage = errorMessage;
+        }
       }
     };
   }
@@ -583,7 +790,7 @@ var global = this;
       onNoTriggerOrError: function(error, result) {
         if (error || !result) {
           // revert the changes
-          undoActionsList.forEach(function (action, index) {
+          undoActionsList.forEach(function(action, index) {
             if (action.execute !== undefined) {
               action.execute();
             }
@@ -617,7 +824,7 @@ var global = this;
         var fieldId = data.fieldName;
         var val = data.state;
 
-        var field =  self.element.getElement(fieldId);
+        var field = self.element.getElement(fieldId);
         var restoreFieldStateAction = false;
 
         if (field.disabled) {
@@ -670,7 +877,7 @@ var global = this;
         //   self.element.updateFormElementValue(destFieldId, srcValue);
         // }
       },
-      setFieldError: function (data) {
+      setFieldError: function(data) {
         var fieldId = data.fieldName;
         var errorMessage = data.errorMessage;
         var field = coreForm.getElement(fieldId);
@@ -692,13 +899,13 @@ var global = this;
     var _previousValue = previousValue;
 
     return {
-      execute: function () {
+      execute: function() {
         _field.value = _previousValue;
       }
     };
   };
 
-  var RestoreFieldStateAction = function (field, stateName, stateValue) {
+  var RestoreFieldStateAction = function(field, stateName, stateValue) {
     // this is the field which state should be restored
     var _field = field;
     // this is the value of the state should be restored
@@ -707,18 +914,18 @@ var global = this;
     var _stateName = stateName;
 
     return {
-      execute: function () {
+      execute: function() {
         _field[_stateName] = _stateValue;
       }
     }
   };
 
-  var ClearErrorMessageAction = function (field) {
+  var ClearErrorMessageAction = function(field) {
     // this is the field on which error message should be cleared
     var _field = field;
 
     return {
-      execute: function () {
+      execute: function() {
         if (_field.errorMessage !== undefined) {
           _field.errorMessage = "";
         }
