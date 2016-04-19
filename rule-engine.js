@@ -209,7 +209,7 @@ var global = this;
    * Updated code from AT-22 for AT-129
    */
 
-  var DataRulesExecutor = global.DataRulesExecutor = function DataRulesExecutor() {
+  var RulesEvaluator = global.RulesEvaluator = function RulesEvaluator() {
     var _schema = false;
     var _values = false;
     var _ruleIndexToActionsAdapter = {};
@@ -258,7 +258,7 @@ var global = this;
           var fieldId = data.fieldName;
           var val = data.state;
 
-          var field = _schema[fieldId];
+          var field = _schema.properties[fieldId];
           var restoreFieldStateAction = false;
 
           if (field.disabled) {
@@ -314,7 +314,7 @@ var global = this;
         setFieldError: function(data) {
           var fieldId = data.fieldName;
           var errorMessage = data.errorMessage;
-          var field = _schema[fieldId];
+          var field = _schema.properties[fieldId];
 
           // there are elements that do not have error message like at-form-section
           if (field.errorMessage !== undefined) {
@@ -349,8 +349,9 @@ var global = this;
        * @param schema - object that is required to contain properties
        * @param values - object that holds value for each property in schema
        * @param rules - array of {conditions, actions} objects that holds each rule that should be applied
+       * @return undefined - result of execute is direct modification of schema and values objects
        */
-      execute: function(schema, values, rules) {
+      evaluate: function(schema, values, rules) {
         // validate parameters
         var schemaExists = Boolean(schema) && Boolean(schema.properties);
         var rulesExist = Boolean(rules) && Boolean(rules.length);
