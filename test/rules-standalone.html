@@ -1,0 +1,1126 @@
+<!doctype html>
+<html>
+
+<head>
+
+  <title>at-rule-engine tests</title>
+
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <script src="../../web-component-tester/browser.js"></script>
+  <script src="../../iron-test-helpers/test-helpers.js"></script>
+  <script src="../../iron-test-helpers/mock-interactions.js"></script>
+
+  <link rel="import" href="../at-rule-engine.html">
+
+</head>
+
+<body>
+
+  <script>
+    function formatStr(format, args) {
+      // replace {n}
+      var fmt = format.replace(/{(\d+)}/g, function(match, number) {
+        return typeof args[number] != 'undefined' ? args[number] : match;
+      });
+      // replace [n]
+      fmt = fmt.replace(/\[(\d+)\]/g, function(match, number) {
+        return typeof args[number] != 'undefined' ? args[number] : match;
+      });
+      return fmt;
+    }
+
+    function getSchema() {
+
+      var schema = {
+        "title": "",
+        "description": "",
+        properties: {
+          "prop1": {
+            type: "boolean",
+            disabled: false,
+            hide: false,
+            errorMessage: "",
+            required: false,
+            default: false
+          },
+          "prop2": {
+            type: "boolean",
+            xtype: "toggle",
+            disabled: false,
+            hide: false,
+            errorMessage: "",
+            required: false,
+            default: false
+          },
+          "prop3": {
+            type: "string",
+            xtype: "code",
+            disabled: false,
+            hide: false,
+            errorMessage: "",
+            required: false,
+            default: ""
+          },
+          "prop4": {
+            type: "string",
+            xtype: "date",
+            disabled: false,
+            hide: false,
+            errorMessage: "",
+            required: false,
+            default: ""
+          },
+          "prop5": {
+            type: "string",
+            xtype: "time",
+            disabled: false,
+            hide: false,
+            errorMessage: "",
+            required: false,
+            default: ""
+          },
+          "prop6": {
+            type: "string",
+            xtype: "datetime",
+            disabled: false,
+            hide: false,
+            errorMessage: "",
+            required: false,
+            default: ""
+          },
+          "prop7": {
+            type: "daterange",
+            disabled: false,
+            hide: false,
+            errorMessage: "",
+            required: false,
+            default: ""
+          },
+          "prop8": {
+            type: "string",
+            xtype: "file",
+            disabled: false,
+            hide: false,
+            errorMessage: "",
+            required: false,
+            default: {
+              "invalid": {
+                "count": 0
+              },
+              "valid": []
+            }
+          },
+          "prop9": {
+            type: "string",
+            xtype: "image",
+            disabled: false,
+            hide: false,
+            errorMessage: "",
+            required: false,
+            default: {
+              "invalid": {
+                "count": 0
+              },
+              "valid": []
+            }
+          },
+          "prop10": {
+            type: "string",
+            xtype: "enum",
+            disabled: false,
+            hide: false,
+            errorMessage: "",
+            required: false,
+            xvaluelist: [],
+            enum: [],
+            default: ""
+          },
+          "prop11": {
+            type: "string",
+            xtype: "lookup",
+            disabled: false,
+            hide: false,
+            errorMessage: "",
+            required: false,
+            url: "",
+            xurl: "",
+            default: ""
+          },
+          "prop12": {
+            type: "string",
+            xtype: "marked",
+            disabled: false,
+            hide: false,
+            errorMessage: "",
+            required: false,
+            default: ""
+          },
+          "prop13": {
+            type: "number",
+            disabled: false,
+            hide: false,
+            errorMessage: "",
+            required: false,
+            default: ""
+          },
+          "prop14": {
+            type: "string",
+            xtype: "password",
+            disabled: false,
+            hide: false,
+            errorMessage: "",
+            required: false,
+            default: ""
+          },
+          "prop15": {
+            type: "string",
+            xtype: "radio",
+            xvaluelist: [],
+            disabled: false,
+            hide: false,
+            errorMessage: "",
+            required: false,
+            default: ""
+          },
+          "prop16": {
+            type: "section",
+            disabled: false,
+            hide: false,
+            errorMessage: "",
+            required: false
+          },
+          "prop18": {
+            type: "string",
+            disabled: false,
+            hide: false,
+            errorMessage: "",
+            required: false,
+            default: ""
+          },
+          "prop19": {
+            type: "string",
+            xtype: "textarea",
+            disabled: false,
+            hide: false,
+            errorMessage: "",
+            required: false,
+            default: ""
+          }
+        },
+        rules: [{
+          caption: "Rule #0",
+          position: 0,
+          rule: {
+            conditions: {
+              "kind": "all",
+              "conditions": [{
+                name: "prop1",
+                operator: "equalTo",
+                compareTo: "text",
+                value: false
+              }]
+            },
+            actions: [{
+              actionName: "setFieldState",
+              fieldName: "prop1",
+              state: "optional"
+            }, {
+              actionName: "updateField",
+              fieldName: "prop1",
+              updateTo: "true"
+            }, {
+              actionName: "setFieldError",
+              fieldName: "prop1",
+              errorMessage: "This is demo error message"
+            }]
+          }
+        }, {
+          caption: "Rule #1",
+          position: 1,
+          rule: {
+            conditions: {
+              "kind": "all",
+              conditions: [{
+                name: "prop1",
+                operator: "equalTo",
+                compareTo: "text",
+                value: false
+              }]
+            },
+            actions: [{
+              actionName: "updateField",
+              fieldName: "prop1",
+              updateTo: "true"
+            }]
+          }
+        }]
+      };
+
+      return schema;
+    }
+
+    function getData() {
+      var value = {
+        prop1: false
+      };
+
+      return value;
+    }
+
+    suite('rules standalone single boolean field', function() {
+
+      function updateValueGenericTestFunction(initialValue, operator, compareTo, actionValue, expectedValue, done) {
+        var schema = {
+          properties: {
+            "prop1": {
+              type: 'boolean',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: false
+            }
+          },
+          rules: [{
+            caption: "Rule 0",
+            position: 0,
+            rule: {
+              conditions: {
+                kind: "all",
+                conditions: [{
+                  name: "prop1",
+                  operator: operator,
+                  compareTo: "text",
+                  value: compareTo
+                }]
+              },
+              actions: [{
+                actionName: "updateField",
+                fieldName: "prop1",
+                updateTo: actionValue
+              }]
+            }
+          }]
+        };
+
+        var values = {
+          prop1: initialValue
+        };
+
+        var ruleEvaluator = RulesEvaluator();
+        ruleEvaluator.evaluate(schema, values, schema.rules);
+        flush(function() {
+          assert.equal(values.prop1, expectedValue, "prop1 value is not updated correctly");
+          done();
+        });
+      }
+
+      test('boolean (checkbox/toggle): value false -> condition equalTo false -> action updateValue true', function(done) {
+        var initialValue = false;
+        var operator = "equalTo";
+        var operatorCompareTo = false;
+        var actionUpdateTo = true;
+        var expectedValue = true;
+
+        updateValueGenericTestFunction(initialValue, operator, operatorCompareTo, actionUpdateTo, expectedValue, done);
+      });
+
+      test('boolean (checkbox/toggle): value true -> condition equalTo true -> action updateValue false', function(done) {
+        var initialValue = true;
+        var operator = "equalTo";
+        var operatorCompareTo = true;
+        var actionUpdateTo = false;
+        var expectedValue = false;
+
+        updateValueGenericTestFunction(initialValue, operator, operatorCompareTo, actionUpdateTo, expectedValue, done);
+      });
+
+      test('boolean (checkbox/toggle): value false -> condition notEqualTo true -> action updateValue true', function(done) {
+        var initialValue = false;
+        var operator = "notEqualTo";
+        var operatorCompareTo = true;
+        var actionUpdateTo = true;
+        var expectedValue = true;
+
+        updateValueGenericTestFunction(initialValue, operator, operatorCompareTo, actionUpdateTo, expectedValue, done);
+      });
+
+      test('boolean (checkbox/toggle): value true -> condition notEqualTo false -> action updateValue false', function(done) {
+        var initialValue = true;
+        var operator = "notEqualTo";
+        var operatorCompareTo = false;
+        var actionUpdateTo = false;
+        var expectedValue = false;
+
+        updateValueGenericTestFunction(initialValue, operator, operatorCompareTo, actionUpdateTo, expectedValue, done);
+      });
+
+      function setFieldStateGenericTestFunction (initialState, expectedState, setToState, done) {
+        var schema = {
+          properties: {
+            "prop1": {
+              type: 'boolean',
+              disabled: initialState.disabled,
+              required: initialState.required,
+              hide: initialState.hidden,
+              errorMessage: "",
+              default: false
+            }
+          },
+          rules: [{
+            caption: "Rule 0",
+            position: 0,
+            rule: {
+              conditions: {
+                kind: "all",
+                conditions: [{
+                  name: "prop1",
+                  operator: "equalTo",
+                  compareTo: "text",
+                  value: false
+                }]
+              },
+              actions: [{
+                actionName: "setFieldState",
+                fieldName: "prop1",
+                state: setToState
+              }]
+            }
+          }]
+        };
+
+        var values = {
+          prop1: false
+        };
+
+        var ruleEvaluator = RulesEvaluator();
+        ruleEvaluator.evaluate(schema, values, schema.rules);
+        var propDef = schema.properties.prop1;
+        flush(function() {
+          assert.equal(propDef.disabled, expectedState.disabled, "prop1 disabled is not updated correctly");
+          assert.equal(propDef.required, expectedState.required, "prop1 required is not updated correctly");
+          assert.equal(propDef.hide, expectedState.hidden, "prop1 hide is not updated correctly");
+          done();
+        });
+      }
+
+      test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, false, false) -> action setFieldState optional', function(done) {
+        var initialState = {
+          disabled: false,
+          required: false,
+          hidden: false
+        };
+        var expectedState = {
+          disabled: false,
+          required: false,
+          hidden: false
+        };
+        var setToState = 'optional';
+
+        setFieldStateGenericTestFunction(initialState, expectedState, setToState, done);
+      });
+
+      test('boolean (checkbox/toggle): (disabled, required, hidden) = (true, true, true) -> action setFieldState optional', function(done) {
+        var initialState = {
+          disabled: true,
+          required: true,
+          hidden: true
+        };
+        var expectedState = {
+          disabled: false,
+          required: true,
+          hidden: true
+        };
+        var setToState = 'optional';
+
+        setFieldStateGenericTestFunction(initialState, expectedState, setToState, done);
+      });
+
+      test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, true, true) -> action setFieldState optional', function(done) {
+        var initialState = {
+          disabled: false,
+          required: true,
+          hidden: true
+        };
+        var expectedState = {
+          disabled: false,
+          required: false,
+          hidden: true
+        };
+        var setToState = 'optional';
+
+        setFieldStateGenericTestFunction(initialState, expectedState, setToState, done);
+      });
+
+      test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, false, true) -> action setFieldState optional', function(done) {
+        var initialState = {
+          disabled: false,
+          required: false,
+          hidden: true
+        };
+        var expectedState = {
+          disabled: false,
+          required: false,
+          hidden: false
+        };
+        var setToState = 'optional';
+
+        setFieldStateGenericTestFunction(initialState, expectedState, setToState, done);
+      });
+
+      test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, false, false) -> action setFieldState disabled', function(done) {
+        var initialState = {
+          disabled: false,
+          required: false,
+          hidden: false
+        };
+        var expectedState = {
+          disabled: true,
+          required: false,
+          hidden: false
+        };
+        var setToState = 'disabled';
+
+        setFieldStateGenericTestFunction(initialState, expectedState, setToState, done);
+      });
+
+      test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, false, false) -> action setFieldState required', function(done) {
+        var initialState = {
+          disabled: false,
+          required: false,
+          hidden: false
+        };
+        var expectedState = {
+          disabled: false,
+          required: true,
+          hidden: false
+        };
+        var setToState = 'required';
+
+        setFieldStateGenericTestFunction(initialState, expectedState, setToState, done);
+      });
+
+      test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, false, false) -> action setFieldState hidden', function(done) {
+        var initialState = {
+          disabled: false,
+          required: false,
+          hidden: false
+        };
+        var expectedState = {
+          disabled: false,
+          required: false,
+          hidden: true
+        };
+        var setToState = 'hidden';
+
+        setFieldStateGenericTestFunction(initialState, expectedState, setToState, done);
+      });
+
+      function setFieldErrorGenericTestFunction (initialError, setToError, expectedError, done) {
+        var schema = {
+          properties: {
+            "prop1": {
+              type: 'boolean',
+              disabled: false,
+              required: false,
+              hide: false,
+              errorMessage: initialError,
+              default: false
+            }
+          },
+          rules: [{
+            caption: "Rule 0",
+            position: 0,
+            rule: {
+              conditions: {
+                kind: "all",
+                conditions: [{
+                  name: "prop1",
+                  operator: "equalTo",
+                  compareTo: "text",
+                  value: false
+                }]
+              },
+              actions: [{
+                actionName: "setFieldError",
+                fieldName: "prop1",
+                errorMessage: setToError
+              }]
+            }
+          }]
+        };
+
+        var values = {
+          prop1: false
+        };
+
+        var ruleEvaluator = RulesEvaluator();
+        ruleEvaluator.evaluate(schema, values, schema.rules);
+        var propDef = schema.properties.prop1;
+        flush(function() {
+          assert.equal(propDef.errorMessage, expectedError, "prop1 error message is not updated correctly");
+          done();
+        });
+      }
+
+      test('boolean (checkbox/toggle): (initialError, setToError, expectedError) = ("", "lorem ipsum", "lorem ipsum") -> action setFieldError', function(done) {
+        var initialError = "";
+        var setToError = "lorem ipsum";
+        var expectedError = "lorem ipsum";
+        setFieldErrorGenericTestFunction(initialError, setToError, expectedError, done);
+      });
+
+      test('boolean (checkbox/toggle): (initialError, setToError, expectedError) = ("lorem ipsum", "", "") -> action setFieldError', function(done) {
+        var initialError = "lorem ipsum";
+        var setToError = "";
+        var expectedError = "";
+        setFieldErrorGenericTestFunction(initialError, setToError, expectedError, done);
+      });
+
+      test('boolean (checkbox/toggle): (initialError, setToError, expectedError) = ("lorem ipsum", "ipsum lorem", "ipsum lorem") -> action setFieldError', function(done) {
+        var initialError = "lorem ipsum";
+        var setToError = "";
+        var expectedError = "";
+        setFieldErrorGenericTestFunction(initialError, setToError, expectedError, done);
+      });
+
+      test('boolean (checkbox/toggle)', function(done) {
+        var schema = {
+          properties: {
+            "prop1": {
+              type: 'boolean',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: false
+            }
+          },
+          rules: [{
+            caption: "Rule 0",
+            position: 0,
+            rule: {
+              conditions: {
+                kind: "all",
+                conditions: [{
+                  name: "prop1",
+                  operator: "equalTo",
+                  compareTo: "text",
+                  value: false
+                }]
+              },
+              actions: [{
+                actionName: "setFieldState",
+                fieldName: "prop1",
+                state: "optional"
+              }, {
+                actionName: "updateField",
+                fieldName: "prop1",
+                updateTo: "true"
+              }, {
+                actionName: "setFieldError",
+                fieldName: "prop1",
+                errorMessage: "lorem ipsum"
+              }]
+            }
+          }]
+        };
+
+        var values = {
+          prop1: false
+        };
+
+        var ruleEvaluator = RulesEvaluator();
+        ruleEvaluator.evaluate(schema, values, schema.rules);
+        flush(function() {
+          assert.equal(values.prop1, true, "prop1 value is not updated correctly");
+          assert.equal(schema.properties.prop1.errorMessage, "lorem ipsum", "prop1 errorMessage is not updated correctly");
+          done();
+        });
+      });
+
+    });
+
+    suite('rules standalone two boolean fields', function() {
+
+      function copyFieldValueGenericTestFunction(field1, field2, done) {
+        var schema = {
+          properties: {
+            "prop1": {
+              type: 'boolean',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: false
+            },
+            "prop2": {
+              type: 'boolean',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: false
+            }
+          },
+          rules: [{
+            caption: "Rule 0",
+            position: 0,
+            rule: {
+              conditions: {
+                kind: "all",
+                conditions: [{
+                  name: "prop1",
+                  operator: "equalTo",
+                  compareTo: "text",
+                  value: field1.initialValue
+                }]
+              },
+              actions: [{
+                actionName: "copyFieldValue",
+                fieldName: "prop1",
+                copyTo: "prop2"
+              }]
+            }
+          }]
+        };
+
+        var values = {
+          prop1: field1.initialValue,
+          prop2: field2.initialValue
+        };
+
+        var ruleEvaluator = RulesEvaluator();
+        ruleEvaluator.evaluate(schema, values, schema.rules);
+        flush(function() {
+          assert.equal(values.prop1, field1.expectedValue, "prop1 value is not updated correctly");
+          assert.equal(values.prop2, field2.expectedValue, "prop1 value is not updated correctly");
+          done();
+        });
+      }
+
+      test('boolean (checkbox/toggle): copyFieldValue action (field1: true, field2: false) -> (field1: true, field2: true)', function (done) {
+        var field1 = {
+          initialValue: true,
+          expectedValue: true
+        };
+        var field2 = {
+          initialValue: false,
+          expectedValue: true
+        }
+
+        copyFieldValueGenericTestFunction(field1, field2, done);
+      });
+
+      test('boolean (checkbox/toggle): copyFieldValue action (field1: false, field2: true) -> (field1: false, field2: false)', function (done) {
+        var field1 = {
+          initialValue: false,
+          expectedValue: false
+        };
+        var field2 = {
+          initialValue: true,
+          expectedValue: false
+        }
+
+        copyFieldValueGenericTestFunction(field1, field2, done);
+      });
+
+    });
+
+    suite('rules standalone All/Any/None conditions test', function() {
+
+      function allAnyNoneGenericTestFunction(kind, field1, field2, done) {
+        var schema = {
+          properties: {
+            "prop1": {
+              type: 'boolean',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: false
+            },
+            "prop2": {
+              type: 'boolean',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: false
+            },
+            "prop3": {
+              type: 'string',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: false
+            }
+          },
+          rules: [{
+            caption: "Rule 0",
+            position: 0,
+            rule: {
+              conditions: {
+                kind: kind,
+                conditions: [{
+                  name: "prop1",
+                  operator: field1.operator,
+                  compareTo: "text",
+                  value: field1.compareToValue
+                }, {
+                  name: "prop2",
+                  operator: field2.operator,
+                  compareTo: "text",
+                  value: field2.compareToValue
+                }]
+              },
+              actions: [{
+                actionName: "updateField",
+                fieldName: "prop3",
+                updateTo: "success"
+              }]
+            }
+          }]
+        };
+
+        var values = {
+          prop1: field1.initialValue,
+          prop2: field2.initialValue,
+          prop3: ""
+        };
+
+        var ruleEvaluator = RulesEvaluator();
+        ruleEvaluator.evaluate(schema, values, schema.rules);
+        flush(function() {
+          assert.equal(values.prop3, "success", "condition evaluation failed");
+          done();
+        });
+
+      }
+
+      test('all conditions test', function (done) {
+        var kind = "all";
+
+        var field1 = {
+          initialValue: false,
+          operator: "equalTo",
+          compareToValue: false
+        };
+
+        var field2 = {
+          initialValue: false,
+          operator: "equalTo",
+          compareToValue: false
+        };
+
+        allAnyNoneGenericTestFunction(kind, field1, field2, done);
+
+      });
+
+      test('any conditions test', function (done) {
+        var kind = "any";
+
+        var field1 = {
+          initialValue: false,
+          operator: "equalTo",
+          compareToValue: true
+        };
+
+        var field2 = {
+          initialValue: false,
+          operator: "equalTo",
+          compareToValue: false
+        };
+
+        allAnyNoneGenericTestFunction(kind, field1, field2, done);
+
+      });
+
+      test('none conditions test', function (done) {
+        var kind = "none";
+
+        var field1 = {
+          initialValue: false,
+          operator: "equalTo",
+          compareToValue: true
+        };
+
+        var field2 = {
+          initialValue: false,
+          operator: "equalTo",
+          compareToValue: true
+        };
+
+        allAnyNoneGenericTestFunction(kind, field1, field2, done);
+
+      });
+
+      test('all/any/none nested conditions test', function (done) {
+
+        var schema = {
+          properties: {
+            "prop1": {
+              type: 'boolean',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: false
+            },
+            "prop2": {
+              type: 'boolean',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: false
+            },
+            "prop3": {
+              type: 'string',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: ""
+            },
+            "prop4": {
+              type: 'string',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: ""
+            },
+            "prop5": {
+              type: 'number',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: 0
+            },
+            "prop6": {
+              type: 'number',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: 0
+            },
+            "prop7": {
+              type: 'string',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: ""
+            }
+          },
+          rules: [{
+            caption: "Rule 0",
+            position: 0,
+            rule: {
+              conditions: {
+                kind: "all",
+                conditions: [{
+                  kind: "all",
+                  conditions:[{
+                    name: "prop1",
+                    operator: "equalTo",
+                    compareTo: "text",
+                    value: true
+                  },{
+                    name: "prop2",
+                    operator: "notEqualTo",
+                    compareTo: "text",
+                    value: false
+                  }]
+                }, {
+                  kind: "any",
+                  conditions: [{
+                    name: "prop3",
+                    operator: "equalTo",
+                    compareTo: "text",
+                    value: "prop3 value"
+                  },{
+                    name: "prop4",
+                    operator: "notEqualTo",
+                    compareTo: "text",
+                    value: "prop4 value"
+                  }]
+                }, {
+                  kind: "none",
+                  conditions: [{
+                    name: "prop5",
+                    operator: "equalTo",
+                    compareTo: "text",
+                    value: 50
+                  },{
+                    name: "prop6",
+                    operator: "notEqualTo",
+                    compareTo: "text",
+                    value: 42
+                  }]
+                }]
+              },
+              actions: [{
+                actionName: "updateField",
+                fieldName: "prop7",
+                updateTo: "success"
+              }]
+            }
+          }]
+        };
+
+        var values = {
+          prop1: true,
+          prop2: true,
+          prop3: "prop3 value",
+          prop4: "prop3 value",
+          prop5: 49,
+          prop6: 42,
+          prop7: ""
+        };
+
+        var ruleEvaluator = RulesEvaluator();
+        ruleEvaluator.evaluate(schema, values, schema.rules);
+        flush(function() {
+          assert.equal(values.prop7, "success", "nested condition evaluation failed");
+          done();
+        });
+
+      });
+
+      test('after multiple actions only final value is written into values', function (done) {
+        var kind = "all";
+
+        var schema = {
+          properties: {
+            "prop1": {
+              type: 'boolean',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: false
+            },
+            "prop2": {
+              type: 'boolean',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: false
+            },
+            "prop3": {
+              type: 'string',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: false
+            }
+          },
+          rules: [{
+            caption: "Rule 0",
+            position: 0,
+            rule: {
+              conditions: {
+                kind: kind,
+                conditions: [{
+                  name: "prop1",
+                  operator: "equalTo",
+                  compareTo: "text",
+                  value: true
+                }, {
+                  name: "prop2",
+                  operator: "notEqualTo",
+                  compareTo: "text",
+                  value: false
+                }]
+              },
+              actions: [{
+                actionName: "updateField",
+                fieldName: "prop3",
+                updateTo: "step 1"
+              }]
+            }
+          },{
+            caption: "Rule 1",
+            position: 1,
+            rule: {
+              conditions: {
+                kind: kind,
+                conditions: [{
+                  name: "prop1",
+                  operator: "equalTo",
+                  compareTo: "text",
+                  value: true
+                }, {
+                  name: "prop2",
+                  operator: "notEqualTo",
+                  compareTo: "text",
+                  value: false
+                }]
+              },
+              actions: [{
+                actionName: "updateField",
+                fieldName: "prop3",
+                updateTo: "step 2"
+              }]
+            }
+          },{
+            caption: "Rule 2",
+            position: 2,
+            rule: {
+              conditions: {
+                kind: kind,
+                conditions: [{
+                  name: "prop1",
+                  operator: "equalTo",
+                  compareTo: "text",
+                  value: true
+                }, {
+                  name: "prop2",
+                  operator: "notEqualTo",
+                  compareTo: "text",
+                  value: false
+                }]
+              },
+              actions: [{
+                actionName: "updateField",
+                fieldName: "prop3",
+                updateTo: "success"
+              }]
+            }
+          }]
+        };
+
+        var values = {
+          prop1: true,
+          prop2: true,
+          prop3: ""
+        };
+
+        var ruleEvaluator = RulesEvaluator();
+        ruleEvaluator.evaluate(schema, values, schema.rules);
+        flush(function() {
+          assert.equal(values.prop3, "success", "condition evaluation failed");
+          done();
+        });
+
+      });
+
+    });
+
+  </script>
+
+</body>
+
+</html>
