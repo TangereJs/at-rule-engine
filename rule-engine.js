@@ -47,7 +47,7 @@ var global = this;
       conditions: []
     };
     this.addOperators(standardOperators);
-  }
+  };
 
   RuleEngine.prototype = {
     run: function(conditionsAdapter, actionsAdapter, cb) {
@@ -112,7 +112,7 @@ var global = this;
       for (var i = 0; i < this.actions.length; i++) {
         var actionData = this.actions[i];
         var actionName = actionData.actionName;
-        var actionFunction = actionsAdapter[actionName]
+        var actionFunction = actionsAdapter[actionName];
         if (actionFunction) {
           actionFunction(actionData);
         }
@@ -164,7 +164,7 @@ var global = this;
         if (isAny && !!result) return cb(null, true);
         if (isNone && !!result) return cb(null, false);
         next();
-      }
+      };
       next();
     } catch (e) {
       cb(e);
@@ -180,7 +180,7 @@ var global = this;
             compareValues(result, node.operator, node.value, engine, cb);
           });
         } else {
-          value = value()
+          value = value();
         }
       }
       var nodeValue = node.compareTo === "field" ? obj[node.value] : node.value;
@@ -209,19 +209,19 @@ var global = this;
    * Updated code from AT-22 for AT-129
    */
 
+   function parseBool(value) {
+     var result = Boolean(value);
+     // Boolean("true") = true and Boolean("false") = true because Boolean("non empty string") = true
+     // so if value === "false" assign bool literal false
+     result = value === "false" ? false : result;
+
+     return result;
+   }
+
   var RulesEvaluator = global.RulesEvaluator = function RulesEvaluator() {
     var _schema = false;
     var _values = false;
     var _ruleIndexToActionsAdapter = {};
-
-    function parseBool(value) {
-      var result = Boolean(value);
-      // Boolean("true") = true and Boolean("false") = true because Boolean("non empty string") = true
-      // so if value === "false" assign bool literal false
-      result = value === "false" ? false : result;
-
-      return result;
-    }
 
     var _ActionsAdapter = function() {
       var _undoActionsList = [];
@@ -338,7 +338,7 @@ var global = this;
             _undoActionsList = [];
           }
         }
-      }
+      };
     };
 
     // last validated data object as json string
@@ -386,7 +386,7 @@ var global = this;
         }
       }
     };
-  }
+  };
 
 
   /**
@@ -454,11 +454,12 @@ var global = this;
     var arrayBusinessValue = [];
     var i;
     var aLen = arrayValue.length;
+    var businessItem;
 
     for (i = 0; i < aLen; i++) {
       var arrayItem = arrayValue[i];
       var propertyNames = Object.keys(arrayItem);
-      var businessItem = {};
+      businessItem = {};
       copyProperties(propertyNames, arrayItem, businessItem);
       arrayBusinessValue.push(businessItem);
     }
@@ -475,7 +476,7 @@ var global = this;
     }
 
     return arrayBusinessValue;
-  }
+  };
 
   DataValidator.prototype.arrayActionsAdapter = function(element, arrayItemValue, itemPosition) {
     var self = this;
@@ -545,7 +546,7 @@ var global = this;
         var complex = formArray._getElementFromForm(itemPosition);
         var field = complex.getElement(fieldId);
 
-        var previousState = undefined;
+        var previousState;
         if (previousStates[fieldId] === undefined) {
           previousState = {
             originalState: '',
@@ -573,7 +574,7 @@ var global = this;
           previousState.originalState = 'required';
         } else if (field.hide) {
           // previous state was hide
-          previousState.originalState = 'hide'
+          previousState.originalState = 'hide';
         }
 
         field[previousState.originalState] = false;
@@ -602,7 +603,7 @@ var global = this;
         }
       }
     };
-  }
+  };
 
   // this is the handler for at-core-form.data-changed and at-form-complex.value-changed
   DataValidator.prototype.onElementDataChanged = function(event) {
@@ -718,7 +719,7 @@ var global = this;
 
         var field = coreForm.getElement(fieldId);
 
-        var previousState = undefined;
+        var previousState;
         if (previousStates[fieldId] === undefined) {
           previousState = {
             originalState: '',
@@ -746,7 +747,7 @@ var global = this;
           previousState.originalState = 'required';
         } else if (field.hide) {
           // previous state was hide
-          previousState.originalState = 'hide'
+          previousState.originalState = 'hide';
         }
 
         field[previousState.originalState] = false;
@@ -763,11 +764,13 @@ var global = this;
       copyFieldValue: function(data) {
         var srcFieldId = data.fieldName;
         var destFieldId = data.copyTo;
+        var srcValue;
+
         if (coreForm.data) {
-          var srcValue = coreForm.data[srcFieldId];
+          srcValue = coreForm.data[srcFieldId];
           coreForm.updateFormElementData(destFieldId, srcValue);
         } else if (coreForm.value) {
-          var srcValue = coreForm.value[srcFieldId];
+          srcValue = coreForm.value[srcFieldId];
           coreForm.updateFormElementValue(destFieldId, srcValue);
         }
       },
@@ -780,7 +783,7 @@ var global = this;
         }
       }
     };
-  }
+  };
 
   DataValidator.prototype.coreFormActionsAdapter = function(dataValidator) {
     var self = dataValidator;
@@ -890,7 +893,7 @@ var global = this;
           undoActionsList.push(clearErrorMessageAction);
         }
       }
-    }
+    };
   };
 
   var RestoreFieldValueAction = function(field, previousValue) {
@@ -918,7 +921,7 @@ var global = this;
       execute: function() {
         _field[_stateName] = _stateValue;
       }
-    }
+    };
   };
 
   var ClearErrorMessageAction = function(field) {
@@ -931,7 +934,75 @@ var global = this;
           _field.errorMessage = "";
         }
       }
+    };
+  };
+
+  global.RuleEngineUtils = {
+    GetNextProperty: function (schema, data) {
+      var result = isObject(schema) && isObject(schema.properties) && isArray(schema.rules) && isObject(data);
+      if (!result) { return result; }
+
+      var properties = schema.properties;
+      var propNames = Object.keys(properties);
+      var length = propNames.length;
+
+      result = parseBool(length);
+      if (!result) { return result; }
+
+      var propName;
+      var propDef;
+      var i;
+      var next = false;
+
+      var rulesEvaluator = RulesEvaluator();
+      rulesEvaluator.evaluate(schema, data, schema.rules);
+
+      for (i = 0; i < length && !next; i++) {
+        propName = propNames[i];
+        propDef = properties[propName];
+
+        if (isDisabled(propDef) || isHidden(propDef)) {
+          continue;
+        }
+
+        if (hasData(propName, data) && isRequired(propDef)) {
+          continue;
+        }
+
+        if (!hasData(propName, data) || isRequired(propDef)) {
+          next = propName;
+        }
+      }
+
+      return next;
     }
   };
+
+  function isRequired(propDef) {
+    return parseBool(propDef.required) && !parseBool(propDef.hidden);
+  }
+
+  function isOptional(propDef) {
+    return !isRequired(propDef);
+  }
+
+  function isDisabled(propDef) {
+    return parseBool(propDef.disabled);
+  }
+  function isHidden(propDef) {
+    return parseBool(propDef.hide);
+  }
+
+  function hasData(propName, data) {
+    return data[propName] !== undefined;
+  }
+
+  function isObject(obj) {
+    return Object.prototype.toString.call(obj) === "[object Object]";
+  }
+  function isArray(obj) {
+    return Object.prototype.toString.call(obj) === "[object Array]";
+  }
+
 
 })();
