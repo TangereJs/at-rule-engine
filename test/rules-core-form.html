@@ -24,6 +24,13 @@
 
   suite('rules at-core-form single boolean field', function() {
 
+    /********************************************************************************/
+    /*  Tests for updateField action
+        We test if updateField action correctly updates field value
+        We have a single field in schema, a single condition and a single action
+        We test two condition operators equalTo and notEqualTo
+    /********************************************************************************/
+
     function updateValueGenericTestFunction(initialValue, operator, compareTo, updateTo, actionValue, expectedValue, done) {
       var schema = {
         properties: {
@@ -78,6 +85,12 @@
       });
     }
 
+    /*  initial value of the field is true
+        we set the value to false to trigger rule evaluation
+        in condition we check if value is equal to false
+        in action we update value to true
+        we expect that we read the value of true from the element
+    */
     test('boolean (checkbox/toggle): value false -> condition equalTo false -> action updateValue true', function(done) {
       var initialValue = true;
       var operator = "equalTo";
@@ -122,6 +135,19 @@
       updateValueGenericTestFunction(initialValue, operator, operatorCompareTo, updateTo, actionUpdateTo, expectedValue, done);
     });
 
+    /********************************************************************************/
+    /*  tests for setFieldState action
+        From rule engine point of view, element state is "optional", "disabled", "required", "hidden".
+        These states are exclusive from rules perspective. So if element is initially required, setFieldState = optional sets required to false.
+
+        Its assumed that element won't have "disabled" and "hidden" true at the same time.
+        It that is the case, setFieldState "optional" will set one to false according following:
+        If element has disabled, required and hide all set to true, setFieldState = Optional will set
+        disabled to false first, than required set to false then hide set to false.
+
+        We have a single field in schema, a single condition and a single action
+        we test different combinations of (disabled,required,hidden)
+    /********************************************************************************/
     function setElementStateGenericTestFunction(initialState, expectedState, setToState, done) {
       var schema = {
         properties: {
@@ -179,7 +205,9 @@
         done();
       });
     }
-
+    /*
+      if element (disabled, required, hidden) is initially (false, false, false) setFieldState = optional should keep them all false
+    */
     test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, false, false) -> action setElementState optional', function(done) {
       var initialState = {
         disabled: false,
@@ -196,6 +224,10 @@
       setElementStateGenericTestFunction(initialState, expectedState, setToState, done);
     });
 
+    /*
+      if element (disabled, required, hidden) is initially (true, true, true) setFieldState = optional should produce (false, true, true)
+      (true, true, true) is not really valid from rule point of view so disabled should be false but required and hide should remain true
+    */
     test('boolean (checkbox/toggle): (disabled, required, hidden) = (true, true, true) -> action setElementState optional', function(done) {
       var initialState = {
         disabled: true,
@@ -212,6 +244,10 @@
       setElementStateGenericTestFunction(initialState, expectedState, setToState, done);
     });
 
+    /*
+      if element (disabled, required, hidden) is initially (false, true, true) setFieldState = optional should produce (false, false, true)
+      (false, true, true) is not really valid from rule point of view so required should be false but hide should remain true and disabled unchanged
+    */
     test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, true, true) -> action setElementState optional', function(done) {
       var initialState = {
         disabled: false,
@@ -228,6 +264,10 @@
       setElementStateGenericTestFunction(initialState, expectedState, setToState, done);
     });
 
+    /*
+      if element (disabled, required, hidden) is initially (false, false, true) setFieldState = optional should produce (false, false, false)
+      (false, false, true) is valid from rule point of view so hide should be false and disabled and required should remain unchanged
+    */
     test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, false, true) -> action setElementState optional', function(done) {
       var initialState = {
         disabled: false,
@@ -244,6 +284,9 @@
       setElementStateGenericTestFunction(initialState, expectedState, setToState, done);
     });
 
+    /*
+      if element (disabled, required, hidden) is initially (false, false, false) setFieldState = disabled should produce (true, false, false)
+    */
     test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, false, false) -> action setElementState disabled', function(done) {
       var initialState = {
         disabled: false,
@@ -260,6 +303,9 @@
       setElementStateGenericTestFunction(initialState, expectedState, setToState, done);
     });
 
+    /*
+      if element (disabled, required, hidden) is initially (false, false, false) setFieldState = required should produce (false, true, false)
+    */
     test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, false, false) -> action setElementState required', function(done) {
       var initialState = {
         disabled: false,
@@ -276,6 +322,9 @@
       setElementStateGenericTestFunction(initialState, expectedState, setToState, done);
     });
 
+    /*
+      if element (disabled, required, hidden) is initially (false, false, false) setFieldState = hidden should produce (false, false, true)
+    */
     test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, false, false) -> action setElementState hidden', function(done) {
       var initialState = {
         disabled: false,
@@ -292,7 +341,14 @@
       setElementStateGenericTestFunction(initialState, expectedState, setToState, done);
     });
 
-    function setFieldErrorGenericTestFunction(initialError, setToError, expectedError, done) {
+
+    /********************************************************************************/
+    /*  tests for setFieldError action
+
+        We have a single field in schema, a single condition and a single action
+    /********************************************************************************/
+
+    function setFieldErrorGenericTestFunction(initialError, setToError, expectedError, expectedValid, done) {
       var schema = {
         properties: {
           "prop1": {
@@ -343,29 +399,39 @@
       var propDef = atCoreForm._activeSchema.properties.prop1;
       flush(function() {
         assert.equal(propDef.errorMessage, expectedError, "prop1 error message is not updated correctly");
+        assert.equal(element.valid, expectedValid, "element\'s valid state is not updated correctly.")
         done();
       });
     }
 
+    /*
+        initialError is empty; we set non empty error; error messages must match and element must be invalid
+     */
     test('boolean (checkbox/toggle): (initialError, setToError, expectedError) = ("", "lorem ipsum", "lorem ipsum") -> action setFieldError', function(done) {
       var initialError = "";
       var setToError = "lorem ipsum";
       var expectedError = "lorem ipsum";
-      setFieldErrorGenericTestFunction(initialError, setToError, expectedError, done);
+      setFieldErrorGenericTestFunction(initialError, setToError, expectedError, false, done);
     });
 
+    /*
+        initialError is non empty; we set empty error; error message must match empty string and element must be valid
+     */
     test('boolean (checkbox/toggle): (initialError, setToError, expectedError) = ("lorem ipsum", "", "") -> action setFieldError', function(done) {
       var initialError = "lorem ipsum";
       var setToError = "";
       var expectedError = "";
-      setFieldErrorGenericTestFunction(initialError, setToError, expectedError, done);
+      setFieldErrorGenericTestFunction(initialError, setToError, expectedError, true, done);
     });
 
+    /*
+        initialError is non empty; we set different non empty error; error messages must match and element must be invalid
+     */
     test('boolean (checkbox/toggle): (initialError, setToError, expectedError) = ("lorem ipsum", "ipsum lorem", "ipsum lorem") -> action setFieldError', function(done) {
       var initialError = "lorem ipsum";
-      var setToError = "";
-      var expectedError = "";
-      setFieldErrorGenericTestFunction(initialError, setToError, expectedError, done);
+      var setToError = "ipsum lorem";
+      var expectedError = "ipsum lorem";
+      setFieldErrorGenericTestFunction(initialError, setToError, expectedError, false, done);
     });
 
   });
