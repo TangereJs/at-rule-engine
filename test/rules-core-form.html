@@ -1,5 +1,6 @@
 <!doctype html>
 <html>
+
 <head>
 
   <title>at-rule-engine tests</title>
@@ -18,725 +19,870 @@
   <link rel="import" href="../../at-core-form/at-core-form.html">
 
 </head>
+
 <body>
 
   <script>
+    suite('rules at-core-form single boolean field', function() {
 
-  suite('rules at-core-form single boolean field', function() {
-
-    /********************************************************************************/
-    /*  Tests for updateField action
-        We test if updateField action correctly updates field value
-        We have a single field in schema, a single condition and a single action
-        We test two condition operators equalTo and notEqualTo
-    /********************************************************************************/
-
-    function updateValueGenericTestFunction(initialValue, operator, compareTo, updateTo, actionValue, expectedValue, done) {
-      var schema = {
-        properties: {
-          "prop1": {
-            type: 'boolean',
-            disabled: false,
-            hide: false,
-            errorMessage: "",
-            required: false,
-            default: false
-          }
-        },
-        rules: [{
-          caption: "Rule 0",
-          position: 0,
-          rule: {
-            conditions: {
-              kind: "all",
-              conditions: [{
-                name: "prop1",
-                operator: operator,
-                compareTo: "text",
-                value: compareTo
-              }]
-            },
-            actions: [{
-              actionName: "updateField",
-              fieldName: "prop1",
-              updateTo: actionValue
-            }]
-          }
-        }]
-      };
-
-      var values = {
-        prop1: initialValue
-      };
-
-      var atCoreForm = document.createElement('at-core-form');
-      atCoreForm.schema = schema;
-      atCoreForm.data = values;
-
-      atCoreForm.updateFormElementData('prop1', updateTo);
-      var element = atCoreForm.getElement('prop1');
-      element.fire('value-changed', {
-        value: element.value
-      });
-
-      flush(function() {
-        assert.equal(values.prop1, expectedValue, "prop1 value is not updated correctly");
-        done();
-      });
-    }
-
-    /*  initial value of the field is true
-        we set the value to false to trigger rule evaluation
-        in condition we check if value is equal to false
-        in action we update value to true
-        we expect that we read the value of true from the element
-    */
-    test('boolean (checkbox/toggle): value false -> condition equalTo false -> action updateValue true', function(done) {
-      var initialValue = true;
-      var operator = "equalTo";
-      var operatorCompareTo = false;
-      var updateTo = false;
-      var actionUpdateTo = true;
-      var expectedValue = true;
-
-      updateValueGenericTestFunction(initialValue, operator, operatorCompareTo, updateTo, actionUpdateTo, expectedValue, done);
-    });
-
-    test('boolean (checkbox/toggle): value true -> condition equalTo true -> action updateValue false', function(done) {
-      var initialValue = false;
-      var operator = "equalTo";
-      var operatorCompareTo = true;
-      var updateTo = true;
-      var actionUpdateTo = false;
-      var expectedValue = false;
-
-      updateValueGenericTestFunction(initialValue, operator, operatorCompareTo, updateTo, actionUpdateTo, expectedValue, done);
-    });
-
-    test('boolean (checkbox/toggle): value false -> condition notEqualTo true -> action updateValue true', function(done) {
-      var initialValue = true;
-      var operator = "notEqualTo";
-      var operatorCompareTo = true;
-      var updateTo = false;
-      var actionUpdateTo = true;
-      var expectedValue = true;
-
-      updateValueGenericTestFunction(initialValue, operator, operatorCompareTo, updateTo, actionUpdateTo, expectedValue, done);
-    });
-
-    test('boolean (checkbox/toggle): value true -> condition notEqualTo false -> action updateValue false', function(done) {
-      var initialValue = false;
-      var operator = "notEqualTo";
-      var operatorCompareTo = false;
-      var updateTo = true;
-      var actionUpdateTo = false;
-      var expectedValue = false;
-
-      updateValueGenericTestFunction(initialValue, operator, operatorCompareTo, updateTo, actionUpdateTo, expectedValue, done);
-    });
-
-    /********************************************************************************/
-    /*  tests for setFieldState action
-        From rule engine point of view, element state is "optional", "disabled", "required", "hidden".
-        These states are exclusive from rules perspective. So if element is initially required, setFieldState = optional sets required to false.
-
-        Its assumed that element won't have "disabled" and "hidden" true at the same time.
-        It that is the case, setFieldState "optional" will set one to false according following:
-        If element has disabled, required and hide all set to true, setFieldState = Optional will set
-        disabled to false first, than required set to false then hide set to false.
-
-        We have a single field in schema, a single condition and a single action
-        we test different combinations of (disabled,required,hidden)
-    /********************************************************************************/
-    function setElementStateGenericTestFunction(initialState, expectedState, setToState, done) {
-      var schema = {
-        properties: {
-          "prop1": {
-            type: 'boolean',
-            disabled: initialState.disabled,
-            required: initialState.required,
-            hide: initialState.hidden,
-            errorMessage: "",
-            default: false
-          }
-        },
-        rules: [{
-          caption: "Rule 0",
-          position: 0,
-          rule: {
-            conditions: {
-              kind: "all",
-              conditions: [{
-                name: "prop1",
-                operator: "equalTo",
-                compareTo: "text",
-                value: false
-              }]
-            },
-            actions: [{
-              actionName: "setFieldState",
-              fieldName: "prop1",
-              state: setToState
-            }]
-          }
-        }]
-      };
-
-      var values = {
-        prop1: true
-      };
-
-
-      var atCoreForm = document.createElement('at-core-form');
-      atCoreForm.schema = schema;
-      atCoreForm.data = values;
-
-      atCoreForm.updateFormElementData('prop1', false);
-      var element = atCoreForm.getElement('prop1');
-      element.fire('value-changed', {
-        value: element.value
-      });
-      var propDef = atCoreForm._activeSchema.properties.prop1;
-
-      flush(function() {
-        assert.equal(propDef.disabled, expectedState.disabled, "prop1 disabled is not updated correctly");
-        assert.equal(propDef.required, expectedState.required, "prop1 required is not updated correctly");
-        assert.equal(propDef.hide, expectedState.hidden, "prop1 hide is not updated correctly");
-        done();
-      });
-    }
-    /*
-      if element (disabled, required, hidden) is initially (false, false, false) setFieldState = optional should keep them all false
-    */
-    test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, false, false) -> action setElementState optional', function(done) {
-      var initialState = {
-        disabled: false,
-        required: false,
-        hidden: false
-      };
-      var expectedState = {
-        disabled: false,
-        required: false,
-        hidden: false
-      };
-      var setToState = 'optional';
-
-      setElementStateGenericTestFunction(initialState, expectedState, setToState, done);
-    });
-
-    /*
-      if element (disabled, required, hidden) is initially (true, true, true) setFieldState = optional should produce (false, true, true)
-      (true, true, true) is not really valid from rule point of view so disabled should be false but required and hide should remain true
-    */
-    test('boolean (checkbox/toggle): (disabled, required, hidden) = (true, true, true) -> action setElementState optional', function(done) {
-      var initialState = {
-        disabled: true,
-        required: true,
-        hidden: true
-      };
-      var expectedState = {
-        disabled: false,
-        required: true,
-        hidden: true
-      };
-      var setToState = 'optional';
-
-      setElementStateGenericTestFunction(initialState, expectedState, setToState, done);
-    });
-
-    /*
-      if element (disabled, required, hidden) is initially (false, true, true) setFieldState = optional should produce (false, false, true)
-      (false, true, true) is not really valid from rule point of view so required should be false but hide should remain true and disabled unchanged
-    */
-    test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, true, true) -> action setElementState optional', function(done) {
-      var initialState = {
-        disabled: false,
-        required: true,
-        hidden: true
-      };
-      var expectedState = {
-        disabled: false,
-        required: false,
-        hidden: true
-      };
-      var setToState = 'optional';
-
-      setElementStateGenericTestFunction(initialState, expectedState, setToState, done);
-    });
-
-    /*
-      if element (disabled, required, hidden) is initially (false, false, true) setFieldState = optional should produce (false, false, false)
-      (false, false, true) is valid from rule point of view so hide should be false and disabled and required should remain unchanged
-    */
-    test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, false, true) -> action setElementState optional', function(done) {
-      var initialState = {
-        disabled: false,
-        required: false,
-        hidden: true
-      };
-      var expectedState = {
-        disabled: false,
-        required: false,
-        hidden: false
-      };
-      var setToState = 'optional';
-
-      setElementStateGenericTestFunction(initialState, expectedState, setToState, done);
-    });
-
-    /*
-      if element (disabled, required, hidden) is initially (false, false, false) setFieldState = disabled should produce (true, false, false)
-    */
-    test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, false, false) -> action setElementState disabled', function(done) {
-      var initialState = {
-        disabled: false,
-        required: false,
-        hidden: false
-      };
-      var expectedState = {
-        disabled: true,
-        required: false,
-        hidden: false
-      };
-      var setToState = 'disabled';
-
-      setElementStateGenericTestFunction(initialState, expectedState, setToState, done);
-    });
-
-    /*
-      if element (disabled, required, hidden) is initially (false, false, false) setFieldState = required should produce (false, true, false)
-    */
-    test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, false, false) -> action setElementState required', function(done) {
-      var initialState = {
-        disabled: false,
-        required: false,
-        hidden: false
-      };
-      var expectedState = {
-        disabled: false,
-        required: true,
-        hidden: false
-      };
-      var setToState = 'required';
-
-      setElementStateGenericTestFunction(initialState, expectedState, setToState, done);
-    });
-
-    /*
-      if element (disabled, required, hidden) is initially (false, false, false) setFieldState = hidden should produce (false, false, true)
-    */
-    test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, false, false) -> action setElementState hidden', function(done) {
-      var initialState = {
-        disabled: false,
-        required: false,
-        hidden: false
-      };
-      var expectedState = {
-        disabled: false,
-        required: false,
-        hidden: true
-      };
-      var setToState = 'hidden';
-
-      setElementStateGenericTestFunction(initialState, expectedState, setToState, done);
-    });
-
-
-    /********************************************************************************/
-    /*  tests for setFieldError action
-
-        We have a single field in schema, a single condition and a single action
-    /********************************************************************************/
-
-    function setFieldErrorGenericTestFunction(initialError, setToError, expectedError, expectedValid, done) {
-      var schema = {
-        properties: {
-          "prop1": {
-            type: 'boolean',
-            disabled: false,
-            required: false,
-            hide: false,
-            errorMessage: initialError,
-            default: false
-          }
-        },
-        rules: [{
-          caption: "Rule 0",
-          position: 0,
-          rule: {
-            conditions: {
-              kind: "all",
-              conditions: [{
-                name: "prop1",
-                operator: "equalTo",
-                compareTo: "text",
-                value: false
-              }]
-            },
-            actions: [{
-              actionName: "setFieldError",
-              fieldName: "prop1",
-              errorMessage: setToError
-            }]
-          }
-        }]
-      };
-
-      var values = {
-        prop1: true
-      };
-
-      var atCoreForm = document.createElement('at-core-form');
-      atCoreForm.schema = schema;
-      atCoreForm.data = values;
-
-      atCoreForm.updateFormElementData('prop1', false);
-      var element = atCoreForm.getElement('prop1');
-      element.fire('value-changed', {
-        value: element.value
-      });
-
-      var propDef = atCoreForm._activeSchema.properties.prop1;
-      flush(function() {
-        assert.equal(propDef.errorMessage, expectedError, "prop1 error message is not updated correctly");
-        assert.equal(element.valid, expectedValid, "element\'s valid state is not updated correctly.")
-        done();
-      });
-    }
-
-    /*
-        initialError is empty; we set non empty error; error messages must match and element must be invalid
-     */
-    test('boolean (checkbox/toggle): (initialError, setToError, expectedError) = ("", "lorem ipsum", "lorem ipsum") -> action setFieldError', function(done) {
-      var initialError = "";
-      var setToError = "lorem ipsum";
-      var expectedError = "lorem ipsum";
-      setFieldErrorGenericTestFunction(initialError, setToError, expectedError, false, done);
-    });
-
-    /*
-        initialError is non empty; we set empty error; error message must match empty string and element must be valid
-     */
-    test('boolean (checkbox/toggle): (initialError, setToError, expectedError) = ("lorem ipsum", "", "") -> action setFieldError', function(done) {
-      var initialError = "lorem ipsum";
-      var setToError = "";
-      var expectedError = "";
-      setFieldErrorGenericTestFunction(initialError, setToError, expectedError, true, done);
-    });
-
-    /*
-        initialError is non empty; we set different non empty error; error messages must match and element must be invalid
-     */
-    test('boolean (checkbox/toggle): (initialError, setToError, expectedError) = ("lorem ipsum", "ipsum lorem", "ipsum lorem") -> action setFieldError', function(done) {
-      var initialError = "lorem ipsum";
-      var setToError = "ipsum lorem";
-      var expectedError = "ipsum lorem";
-      setFieldErrorGenericTestFunction(initialError, setToError, expectedError, false, done);
-    });
-
-  });
-
-  suite('rules at-core-form two boolean fields', function() {
-
-    function copyFieldValueGenericTestFunction(field1, field2, done) {
-      var schema = {
-        properties: {
-          "prop1": {
-            type: 'boolean',
-            disabled: false,
-            hide: false,
-            errorMessage: "",
-            required: false,
-            default: false
+      /********************************************************************************/
+      /*  Tests for updateField action
+          We test if updateField action correctly updates field value
+          We have a single field in schema, a single condition and a single action
+          We test two condition operators equalTo and notEqualTo
+      /********************************************************************************/
+      function updateValueGenericTestFunction(initialValue, operator, compareTo, updateTo, actionValue, expectedValue, done) {
+        var schema = {
+          properties: {
+            "prop1": {
+              type: 'boolean',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: false
+            }
           },
-          "prop2": {
-            type: 'boolean',
-            disabled: false,
-            hide: false,
-            errorMessage: "",
-            required: false,
-            default: false
-          }
-        },
-        rules: [{
-          caption: "Rule 0",
-          position: 0,
-          rule: {
-            conditions: {
-              kind: "all",
-              conditions: [{
-                name: "prop1",
-                operator: "equalTo",
-                compareTo: "text",
-                value: field1.initialValue
-              }]
-            },
-            actions: [{
-              actionName: "copyFieldValue",
-              fieldName: "prop1",
-              copyTo: "prop2"
-            }]
-          }
-        }]
-      };
-
-      var values = {
-        prop1: !field1.initialValue,
-        prop2: !field2.initialValue
-      };
-
-      var atCoreForm = document.createElement('at-core-form');
-      atCoreForm.schema = schema;
-      atCoreForm.data = values;
-
-      atCoreForm.updateFormElementData('prop1', field1.initialValue);
-      atCoreForm.updateFormElementData('prop2', field2.initialValue);
-      var element = atCoreForm.getElement('prop1');
-      element.fire('value-changed', {
-        value: element.value
-      });
-
-      flush(function() {
-        assert.equal(values.prop1, field1.expectedValue, "prop1 value is not updated correctly");
-        assert.equal(values.prop2, field2.expectedValue, "prop1 value is not updated correctly");
-        done();
-      });
-    }
-
-    test('boolean (checkbox/toggle): copyFieldValue action (field1: true, field2: false) -> (field1: true, field2: true)', function(done) {
-      var field1 = {
-        initialValue: true,
-        expectedValue: true
-      };
-      var field2 = {
-        initialValue: false,
-        expectedValue: true
-      }
-
-      copyFieldValueGenericTestFunction(field1, field2, done);
-    });
-
-    test('boolean (checkbox/toggle): copyFieldValue action (field1: false, field2: true) -> (field1: false, field2: false)', function(done) {
-      var field1 = {
-        initialValue: false,
-        expectedValue: false
-      };
-      var field2 = {
-        initialValue: true,
-        expectedValue: false
-      }
-
-      copyFieldValueGenericTestFunction(field1, field2, done);
-    });
-  });
-
-  suite('rules at-core-form All/Any/None conditions test', function() {
-
-    function allAnyNoneGenericTestFunction(kind, field1, field2, done) {
-      var schema = {
-        properties: {
-          "prop1": {
-            type: 'boolean',
-            disabled: false,
-            hide: false,
-            errorMessage: "",
-            required: false,
-            default: false
-          },
-          "prop2": {
-            type: 'boolean',
-            disabled: false,
-            hide: false,
-            errorMessage: "",
-            required: false,
-            default: false
-          },
-          "prop3": {
-            type: 'string',
-            disabled: false,
-            hide: false,
-            errorMessage: "",
-            required: false,
-            default: false
-          }
-        },
-        rules: [{
-          caption: "Rule 0",
-          position: 0,
-          rule: {
-            conditions: {
-              kind: kind,
-              conditions: [{
-                name: "prop1",
-                operator: field1.operator,
-                compareTo: "text",
-                value: field1.compareToValue
-              }, {
-                name: "prop2",
-                operator: field2.operator,
-                compareTo: "text",
-                value: field2.compareToValue
-              }]
-            },
-            actions: [{
-              actionName: "updateField",
-              fieldName: "prop3",
-              updateTo: "success"
-            }]
-          }
-        }]
-      };
-
-      var values = {
-        prop1: !field1.initialValue,
-        prop2: !field2.initialValue,
-        prop3: ""
-      };
-
-      var atCoreForm = document.createElement('at-core-form');
-      atCoreForm.schema = schema;
-      atCoreForm.data = values;
-
-      atCoreForm.updateFormElementData('prop1', field1.initialValue);
-      atCoreForm.updateFormElementData('prop2', field2.initialValue);
-      var element = atCoreForm.getElement('prop1');
-      element.fire('value-changed', {
-        value: element.value
-      });
-
-      flush(function() {
-        assert.equal(values.prop3, "success", "condition evaluation failed");
-        done();
-      });
-
-    }
-
-    test('all conditions test', function(done) {
-      var kind = "all";
-
-      var field1 = {
-        initialValue: false,
-        operator: "equalTo",
-        compareToValue: false
-      };
-
-      var field2 = {
-        initialValue: false,
-        operator: "equalTo",
-        compareToValue: false
-      };
-
-      allAnyNoneGenericTestFunction(kind, field1, field2, done);
-
-    });
-
-    test('any conditions test', function(done) {
-      var kind = "any";
-
-      var field1 = {
-        initialValue: false,
-        operator: "equalTo",
-        compareToValue: true
-      };
-
-      var field2 = {
-        initialValue: false,
-        operator: "equalTo",
-        compareToValue: false
-      };
-
-      allAnyNoneGenericTestFunction(kind, field1, field2, done);
-
-    });
-
-    test('none conditions test', function(done) {
-      var kind = "none";
-
-      var field1 = {
-        initialValue: false,
-        operator: "equalTo",
-        compareToValue: true
-      };
-
-      var field2 = {
-        initialValue: false,
-        operator: "equalTo",
-        compareToValue: true
-      };
-
-      allAnyNoneGenericTestFunction(kind, field1, field2, done);
-
-    });
-
-    test('all/any/none nested conditions test', function(done) {
-
-      var schema = {
-        properties: {
-          "prop1": {
-            type: 'boolean',
-            disabled: false,
-            hide: false,
-            errorMessage: "",
-            required: false,
-            default: false
-          },
-          "prop2": {
-            type: 'boolean',
-            disabled: false,
-            hide: false,
-            errorMessage: "",
-            required: false,
-            default: false
-          },
-          "prop3": {
-            type: 'string',
-            disabled: false,
-            hide: false,
-            errorMessage: "",
-            required: false,
-            default: ""
-          },
-          "prop4": {
-            type: 'string',
-            disabled: false,
-            hide: false,
-            errorMessage: "",
-            required: false,
-            default: ""
-          },
-          "prop5": {
-            type: 'number',
-            disabled: false,
-            hide: false,
-            errorMessage: "",
-            required: false,
-            default: 0
-          },
-          "prop6": {
-            type: 'number',
-            disabled: false,
-            hide: false,
-            errorMessage: "",
-            required: false,
-            default: 0
-          },
-          "prop7": {
-            type: 'string',
-            disabled: false,
-            hide: false,
-            errorMessage: "",
-            required: false,
-            default: ""
-          }
-        },
-        rules: [{
-          caption: "Rule 0",
-          position: 0,
-          rule: {
-            conditions: {
-              kind: "all",
-              conditions: [{
+          rules: [{
+            caption: "Rule 0",
+            position: 0,
+            rule: {
+              conditions: {
                 kind: "all",
+                conditions: [{
+                  name: "prop1",
+                  operator: operator,
+                  compareTo: "text",
+                  value: compareTo
+                }]
+              },
+              actions: [{
+                actionName: "updateField",
+                fieldName: "prop1",
+                updateTo: actionValue
+              }]
+            }
+          }]
+        };
+
+        var values = {
+          prop1: initialValue
+        };
+
+        var atCoreForm = document.createElement('at-core-form');
+        atCoreForm.schema = schema;
+        atCoreForm.data = values;
+
+        atCoreForm.updateFormElementData('prop1', updateTo);
+        var element = atCoreForm.getElement('prop1');
+        element.fire('value-changed', {
+          value: element.value
+        });
+
+        flush(function() {
+          assert.equal(values.prop1, expectedValue, "prop1 value is not updated correctly");
+          done();
+        });
+      }
+
+      /*  initial value of the field is true
+          we set the value to false to trigger rule evaluation
+          in condition we check if value is equal to false
+          in action we update value to true
+          we expect that we read the value of true from the element
+      */
+      test('boolean (checkbox/toggle): value false -> condition equalTo false -> action updateValue true', function(done) {
+        var initialValue = true;
+        var operator = "equalTo";
+        var operatorCompareTo = false;
+        var updateTo = false;
+        var actionUpdateTo = true;
+        var expectedValue = true;
+
+        updateValueGenericTestFunction(initialValue, operator, operatorCompareTo, updateTo, actionUpdateTo, expectedValue, done);
+      });
+
+      test('boolean (checkbox/toggle): value true -> condition equalTo true -> action updateValue false', function(done) {
+        var initialValue = false;
+        var operator = "equalTo";
+        var operatorCompareTo = true;
+        var updateTo = true;
+        var actionUpdateTo = false;
+        var expectedValue = false;
+
+        updateValueGenericTestFunction(initialValue, operator, operatorCompareTo, updateTo, actionUpdateTo, expectedValue, done);
+      });
+
+      test('boolean (checkbox/toggle): value false -> condition notEqualTo true -> action updateValue true', function(done) {
+        var initialValue = true;
+        var operator = "notEqualTo";
+        var operatorCompareTo = true;
+        var updateTo = false;
+        var actionUpdateTo = true;
+        var expectedValue = true;
+
+        updateValueGenericTestFunction(initialValue, operator, operatorCompareTo, updateTo, actionUpdateTo, expectedValue, done);
+      });
+
+      test('boolean (checkbox/toggle): value true -> condition notEqualTo false -> action updateValue false', function(done) {
+        var initialValue = false;
+        var operator = "notEqualTo";
+        var operatorCompareTo = false;
+        var updateTo = true;
+        var actionUpdateTo = false;
+        var expectedValue = false;
+
+        updateValueGenericTestFunction(initialValue, operator, operatorCompareTo, updateTo, actionUpdateTo, expectedValue, done);
+      });
+
+      /********************************************************************************/
+      /*  tests for setFieldState action
+          From rule engine point of view, element state is "optional", "disabled", "required", "hidden".
+          These states are exclusive from rules perspective. So if element is initially required, setFieldState = optional sets required to false.
+
+          Its assumed that element won't have "disabled" and "hidden" true at the same time.
+          It that is the case, setFieldState "optional" will set one to false according following:
+          If element has disabled, required and hide all set to true, setFieldState = Optional will set
+          disabled to false first, than required set to false then hide set to false.
+
+          We have a single field in schema, a single condition and a single action
+          we test different combinations of (disabled,required,hidden)
+      /********************************************************************************/
+      function setElementStateGenericTestFunction(initialState, expectedState, setToState, done) {
+        var schema = {
+          properties: {
+            "prop1": {
+              type: 'boolean',
+              disabled: initialState.disabled,
+              required: initialState.required,
+              hide: initialState.hidden,
+              errorMessage: "",
+              default: false
+            }
+          },
+          rules: [{
+            caption: "Rule 0",
+            position: 0,
+            rule: {
+              conditions: {
+                kind: "all",
+                conditions: [{
+                  name: "prop1",
+                  operator: "equalTo",
+                  compareTo: "text",
+                  value: false
+                }]
+              },
+              actions: [{
+                actionName: "setFieldState",
+                fieldName: "prop1",
+                state: setToState
+              }]
+            }
+          }]
+        };
+
+        var values = {
+          prop1: true
+        };
+
+
+        var atCoreForm = document.createElement('at-core-form');
+        atCoreForm.schema = schema;
+        atCoreForm.data = values;
+
+        atCoreForm.updateFormElementData('prop1', false);
+        var element = atCoreForm.getElement('prop1');
+        element.fire('value-changed', {
+          value: element.value
+        });
+        var propDef = atCoreForm._activeSchema.properties.prop1;
+
+        flush(function() {
+          assert.equal(propDef.disabled, expectedState.disabled, "prop1 disabled is not updated correctly");
+          assert.equal(propDef.required, expectedState.required, "prop1 required is not updated correctly");
+          assert.equal(propDef.hide, expectedState.hidden, "prop1 hide is not updated correctly");
+          done();
+        });
+      }
+      /*
+        if element (disabled, required, hidden) is initially (false, false, false) setFieldState = optional should keep them all false
+      */
+      test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, false, false) -> action setElementState optional', function(done) {
+        var initialState = {
+          disabled: false,
+          required: false,
+          hidden: false
+        };
+        var expectedState = {
+          disabled: false,
+          required: false,
+          hidden: false
+        };
+        var setToState = 'optional';
+
+        setElementStateGenericTestFunction(initialState, expectedState, setToState, done);
+      });
+
+      /*
+        if element (disabled, required, hidden) is initially (true, true, true) setFieldState = optional should produce (false, true, true)
+        (true, true, true) is not really valid from rule point of view so disabled should be false but required and hide should remain true
+      */
+      test('boolean (checkbox/toggle): (disabled, required, hidden) = (true, true, true) -> action setElementState optional', function(done) {
+        var initialState = {
+          disabled: true,
+          required: true,
+          hidden: true
+        };
+        var expectedState = {
+          disabled: false,
+          required: true,
+          hidden: true
+        };
+        var setToState = 'optional';
+
+        setElementStateGenericTestFunction(initialState, expectedState, setToState, done);
+      });
+
+      /*
+        if element (disabled, required, hidden) is initially (false, true, true) setFieldState = optional should produce (false, false, true)
+        (false, true, true) is not really valid from rule point of view so required should be false but hide should remain true and disabled unchanged
+      */
+      test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, true, true) -> action setElementState optional', function(done) {
+        var initialState = {
+          disabled: false,
+          required: true,
+          hidden: true
+        };
+        var expectedState = {
+          disabled: false,
+          required: false,
+          hidden: true
+        };
+        var setToState = 'optional';
+
+        setElementStateGenericTestFunction(initialState, expectedState, setToState, done);
+      });
+
+      /*
+        if element (disabled, required, hidden) is initially (false, false, true) setFieldState = optional should produce (false, false, false)
+        (false, false, true) is valid from rule point of view so hide should be false and disabled and required should remain unchanged
+      */
+      test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, false, true) -> action setElementState optional', function(done) {
+        var initialState = {
+          disabled: false,
+          required: false,
+          hidden: true
+        };
+        var expectedState = {
+          disabled: false,
+          required: false,
+          hidden: false
+        };
+        var setToState = 'optional';
+
+        setElementStateGenericTestFunction(initialState, expectedState, setToState, done);
+      });
+
+      /*
+        if element (disabled, required, hidden) is initially (false, false, false) setFieldState = disabled should produce (true, false, false)
+      */
+      test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, false, false) -> action setElementState disabled', function(done) {
+        var initialState = {
+          disabled: false,
+          required: false,
+          hidden: false
+        };
+        var expectedState = {
+          disabled: true,
+          required: false,
+          hidden: false
+        };
+        var setToState = 'disabled';
+
+        setElementStateGenericTestFunction(initialState, expectedState, setToState, done);
+      });
+
+      /*
+        if element (disabled, required, hidden) is initially (false, false, false) setFieldState = required should produce (false, true, false)
+      */
+      test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, false, false) -> action setElementState required', function(done) {
+        var initialState = {
+          disabled: false,
+          required: false,
+          hidden: false
+        };
+        var expectedState = {
+          disabled: false,
+          required: true,
+          hidden: false
+        };
+        var setToState = 'required';
+
+        setElementStateGenericTestFunction(initialState, expectedState, setToState, done);
+      });
+
+      /*
+        if element (disabled, required, hidden) is initially (false, false, false) setFieldState = hidden should produce (false, false, true)
+      */
+      test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, false, false) -> action setElementState hidden', function(done) {
+        var initialState = {
+          disabled: false,
+          required: false,
+          hidden: false
+        };
+        var expectedState = {
+          disabled: false,
+          required: false,
+          hidden: true
+        };
+        var setToState = 'hidden';
+
+        setElementStateGenericTestFunction(initialState, expectedState, setToState, done);
+      });
+
+
+      /********************************************************************************/
+      /*  tests for setFieldError action
+
+          We have a single field in schema, a single condition and a single action
+      /********************************************************************************/
+      function setFieldErrorGenericTestFunction(initialError, setToError, expectedError, expectedValid, done) {
+        var schema = {
+          properties: {
+            "prop1": {
+              type: 'boolean',
+              disabled: false,
+              required: false,
+              hide: false,
+              errorMessage: initialError,
+              default: false
+            }
+          },
+          rules: [{
+            caption: "Rule 0",
+            position: 0,
+            rule: {
+              conditions: {
+                kind: "all",
+                conditions: [{
+                  name: "prop1",
+                  operator: "equalTo",
+                  compareTo: "text",
+                  value: false
+                }]
+              },
+              actions: [{
+                actionName: "setFieldError",
+                fieldName: "prop1",
+                errorMessage: setToError
+              }]
+            }
+          }]
+        };
+
+        var values = {
+          prop1: true
+        };
+
+        var atCoreForm = document.createElement('at-core-form');
+        atCoreForm.schema = schema;
+        atCoreForm.data = values;
+
+        atCoreForm.updateFormElementData('prop1', false);
+        var element = atCoreForm.getElement('prop1');
+        element.fire('value-changed', {
+          value: element.value
+        });
+
+        var propDef = atCoreForm._activeSchema.properties.prop1;
+        flush(function() {
+          assert.equal(propDef.errorMessage, expectedError, "prop1 error message is not updated correctly");
+          assert.equal(element.valid, expectedValid, "element\'s valid state is not updated correctly.")
+          done();
+        });
+      }
+
+      /*
+          initialError is empty; we set non empty error; error messages must match and element must be invalid
+       */
+      test('boolean (checkbox/toggle): (initialError, setToError, expectedError) = ("", "lorem ipsum", "lorem ipsum") -> action setFieldError', function(done) {
+        var initialError = "";
+        var setToError = "lorem ipsum";
+        var expectedError = "lorem ipsum";
+        setFieldErrorGenericTestFunction(initialError, setToError, expectedError, false, done);
+      });
+
+      /*
+          initialError is non empty; we set empty error; error message must match empty string and element must be valid
+       */
+      test('boolean (checkbox/toggle): (initialError, setToError, expectedError) = ("lorem ipsum", "", "") -> action setFieldError', function(done) {
+        var initialError = "lorem ipsum";
+        var setToError = "";
+        var expectedError = "";
+        setFieldErrorGenericTestFunction(initialError, setToError, expectedError, true, done);
+      });
+
+      /*
+          initialError is non empty; we set different non empty error; error messages must match and element must be invalid
+       */
+      test('boolean (checkbox/toggle): (initialError, setToError, expectedError) = ("lorem ipsum", "ipsum lorem", "ipsum lorem") -> action setFieldError', function(done) {
+        var initialError = "lorem ipsum";
+        var setToError = "ipsum lorem";
+        var expectedError = "ipsum lorem";
+        setFieldErrorGenericTestFunction(initialError, setToError, expectedError, false, done);
+      });
+
+    });
+
+    suite('rules at-core-form two boolean fields', function() {
+
+      /********************************************************************************/
+      /*  tests for copyFieldValue action
+
+          We have two fields in schema, a single condition and a single action
+      /********************************************************************************/
+      function copyFieldValueGenericTestFunction(field1, field2, done) {
+        var schema = {
+          properties: {
+            "prop1": {
+              type: 'boolean',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: false
+            },
+            "prop2": {
+              type: 'boolean',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: false
+            }
+          },
+          rules: [{
+            caption: "Rule 0",
+            position: 0,
+            rule: {
+              conditions: {
+                kind: "all",
+                conditions: [{
+                  name: "prop1",
+                  operator: "equalTo",
+                  compareTo: "text",
+                  value: field1.initialValue
+                }]
+              },
+              actions: [{
+                actionName: "copyFieldValue",
+                fieldName: "prop1",
+                copyTo: "prop2"
+              }]
+            }
+          }]
+        };
+
+        var values = {
+          prop1: !field1.initialValue,
+          prop2: !field2.initialValue
+        };
+
+        var atCoreForm = document.createElement('at-core-form');
+        atCoreForm.schema = schema;
+        atCoreForm.data = values;
+
+        atCoreForm.updateFormElementData('prop1', field1.initialValue);
+        atCoreForm.updateFormElementData('prop2', field2.initialValue);
+        var element = atCoreForm.getElement('prop1');
+        element.fire('value-changed', {
+          value: element.value
+        });
+
+        flush(function() {
+          assert.equal(values.prop1, field1.expectedValue, "prop1 value is not updated correctly");
+          assert.equal(values.prop2, field2.expectedValue, "prop1 value is not updated correctly");
+          done();
+        });
+      }
+      /*
+        initially field1 one is true, field2 is false, copyFieldValue copies field1 to field2, expectedResult is field1 true, field2 true
+       */
+      test('boolean (checkbox/toggle): copyFieldValue action (field1: true, field2: false) -> (field1: true, field2: true)', function(done) {
+        var field1 = {
+          initialValue: true,
+          expectedValue: true
+        };
+        var field2 = {
+          initialValue: false,
+          expectedValue: true
+        }
+
+        copyFieldValueGenericTestFunction(field1, field2, done);
+      });
+
+      /*
+        initially field1 one is false, field2 is true, copyFieldValue copies field1 to field2, expectedResult is field1 false, field2 false
+       */
+      test('boolean (checkbox/toggle): copyFieldValue action (field1: false, field2: true) -> (field1: false, field2: false)', function(done) {
+        var field1 = {
+          initialValue: false,
+          expectedValue: false
+        };
+        var field2 = {
+          initialValue: true,
+          expectedValue: false
+        }
+
+        copyFieldValueGenericTestFunction(field1, field2, done);
+      });
+    });
+
+    suite('rules at-core-form All/Any/None conditions test', function() {
+
+      /********************************************************************************/
+      /*  tests for all/any/none in conditions
+
+          We have three fields in schema, a two condition and a single action
+          third field's value is updated if result of condition evaluation is true
+          we assert third field's value
+      /********************************************************************************/
+      function allAnyNoneGenericTestFunction(kind, field1, field2, done) {
+        var schema = {
+          properties: {
+            "prop1": {
+              type: 'boolean',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: false
+            },
+            "prop2": {
+              type: 'boolean',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: false
+            },
+            "prop3": {
+              type: 'string',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: false
+            }
+          },
+          rules: [{
+            caption: "Rule 0",
+            position: 0,
+            rule: {
+              conditions: {
+                kind: kind,
+                conditions: [{
+                  name: "prop1",
+                  operator: field1.operator,
+                  compareTo: "text",
+                  value: field1.compareToValue
+                }, {
+                  name: "prop2",
+                  operator: field2.operator,
+                  compareTo: "text",
+                  value: field2.compareToValue
+                }]
+              },
+              actions: [{
+                actionName: "updateField",
+                fieldName: "prop3",
+                updateTo: "success"
+              }]
+            }
+          }]
+        };
+
+        var values = {
+          prop1: !field1.initialValue,
+          prop2: !field2.initialValue,
+          prop3: ""
+        };
+
+        var atCoreForm = document.createElement('at-core-form');
+        atCoreForm.schema = schema;
+        atCoreForm.data = values;
+
+        atCoreForm.updateFormElementData('prop1', field1.initialValue);
+        atCoreForm.updateFormElementData('prop2', field2.initialValue);
+        var element = atCoreForm.getElement('prop1');
+        element.fire('value-changed', {
+          value: element.value
+        });
+
+        flush(function() {
+          assert.equal(values.prop3, "success", "condition evaluation failed");
+          done();
+        });
+
+      }
+      /*
+          test: all conditions must evaluate to true
+       */
+      test('all conditions test', function(done) {
+        var kind = "all";
+
+        var field1 = {
+          initialValue: false,
+          operator: "equalTo",
+          compareToValue: false
+        };
+
+        var field2 = {
+          initialValue: false,
+          operator: "equalTo",
+          compareToValue: false
+        };
+
+        allAnyNoneGenericTestFunction(kind, field1, field2, done);
+
+      });
+
+      /*
+          test: at least one of the conditions must evaluate to true
+       */
+      test('any conditions test', function(done) {
+        var kind = "any";
+
+        var field1 = {
+          initialValue: false,
+          operator: "equalTo",
+          compareToValue: true
+        };
+
+        var field2 = {
+          initialValue: false,
+          operator: "equalTo",
+          compareToValue: false
+        };
+
+        allAnyNoneGenericTestFunction(kind, field1, field2, done);
+
+      });
+      /*
+          test: all conditions must evaluate to false
+       */
+      test('none conditions test', function(done) {
+        var kind = "none";
+
+        var field1 = {
+          initialValue: false,
+          operator: "equalTo",
+          compareToValue: true
+        };
+
+        var field2 = {
+          initialValue: false,
+          operator: "equalTo",
+          compareToValue: true
+        };
+
+        allAnyNoneGenericTestFunction(kind, field1, field2, done);
+
+      });
+
+      /*
+          test: for nested conditions
+          we have seven fields; a parent "all" condition and [ all, any and none] child conditions
+          we have a single action which sets seventh field's value to success
+          conditions should evaluate to true; we assert seventh field's value
+       */
+      test('all/any/none nested conditions test', function(done) {
+
+        var schema = {
+          properties: {
+            "prop1": {
+              type: 'boolean',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: false
+            },
+            "prop2": {
+              type: 'boolean',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: false
+            },
+            "prop3": {
+              type: 'string',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: ""
+            },
+            "prop4": {
+              type: 'string',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: ""
+            },
+            "prop5": {
+              type: 'number',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: 0
+            },
+            "prop6": {
+              type: 'number',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: 0
+            },
+            "prop7": {
+              type: 'string',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: ""
+            }
+          },
+          rules: [{
+            caption: "Rule 0",
+            position: 0,
+            rule: {
+              conditions: {
+                kind: "all",
+                conditions: [{
+                  kind: "all",
+                  conditions: [{
+                    name: "prop1",
+                    operator: "equalTo",
+                    compareTo: "text",
+                    value: true
+                  }, {
+                    name: "prop2",
+                    operator: "notEqualTo",
+                    compareTo: "text",
+                    value: false
+                  }]
+                }, {
+                  kind: "any",
+                  conditions: [{
+                    name: "prop3",
+                    operator: "equalTo",
+                    compareTo: "text",
+                    value: "prop3 value"
+                  }, {
+                    name: "prop4",
+                    operator: "notEqualTo",
+                    compareTo: "text",
+                    value: "prop4 value"
+                  }]
+                }, {
+                  kind: "none",
+                  conditions: [{
+                    name: "prop5",
+                    operator: "equalTo",
+                    compareTo: "text",
+                    value: 50
+                  }, {
+                    name: "prop6",
+                    operator: "notEqualTo",
+                    compareTo: "text",
+                    value: 42
+                  }]
+                }]
+              },
+              actions: [{
+                actionName: "updateField",
+                fieldName: "prop7",
+                updateTo: "success"
+              }]
+            }
+          }]
+        };
+
+        var values = {
+          prop1: false,
+          prop2: true,
+          prop3: "prop3 value",
+          prop4: "prop3 value",
+          prop5: 49,
+          prop6: 42,
+          prop7: ""
+        };
+
+        var atCoreForm = document.createElement('at-core-form');
+        atCoreForm.schema = schema;
+        atCoreForm.data = values;
+
+        atCoreForm.updateFormElementData('prop1', true);
+        var element = atCoreForm.getElement('prop1');
+        element.fire('value-changed', {
+          value: element.value
+        });
+
+        flush(function() {
+          assert.equal(values.prop7, "success", "nested condition evaluation failed");
+          done();
+        });
+
+      });
+
+      /*
+          test: multiple actions update same field
+          we have three fields and three rules with their sets of conditions and actions
+          all rules have actions that update same field
+          we assert that only the value written by the action of the third rule
+       */
+      test('after multiple actions only final value is written into values', function (done) {
+        var kind = "all";
+
+        var schema = {
+          properties: {
+            "prop1": {
+              type: 'boolean',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: false
+            },
+            "prop2": {
+              type: 'boolean',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: false
+            },
+            "prop3": {
+              type: 'string',
+              disabled: false,
+              hide: false,
+              errorMessage: "",
+              required: false,
+              default: false
+            }
+          },
+          rules: [{
+            caption: "Rule 0",
+            position: 0,
+            rule: {
+              conditions: {
+                kind: kind,
                 conditions: [{
                   name: "prop1",
                   operator: "equalTo",
@@ -748,70 +894,90 @@
                   compareTo: "text",
                   value: false
                 }]
-              }, {
-                kind: "any",
-                conditions: [{
-                  name: "prop3",
-                  operator: "equalTo",
-                  compareTo: "text",
-                  value: "prop3 value"
-                }, {
-                  name: "prop4",
-                  operator: "notEqualTo",
-                  compareTo: "text",
-                  value: "prop4 value"
-                }]
-              }, {
-                kind: "none",
-                conditions: [{
-                  name: "prop5",
-                  operator: "equalTo",
-                  compareTo: "text",
-                  value: 50
-                }, {
-                  name: "prop6",
-                  operator: "notEqualTo",
-                  compareTo: "text",
-                  value: 42
-                }]
+              },
+              actions: [{
+                actionName: "updateField",
+                fieldName: "prop3",
+                updateTo: "step 1"
               }]
-            },
-            actions: [{
-              actionName: "updateField",
-              fieldName: "prop7",
-              updateTo: "success"
-            }]
-          }
-        }]
-      };
+            }
+          },{
+            caption: "Rule 1",
+            position: 1,
+            rule: {
+              conditions: {
+                kind: kind,
+                conditions: [{
+                  name: "prop1",
+                  operator: "equalTo",
+                  compareTo: "text",
+                  value: true
+                }, {
+                  name: "prop2",
+                  operator: "notEqualTo",
+                  compareTo: "text",
+                  value: false
+                }]
+              },
+              actions: [{
+                actionName: "updateField",
+                fieldName: "prop3",
+                updateTo: "step 2"
+              }]
+            }
+          },{
+            caption: "Rule 2",
+            position: 2,
+            rule: {
+              conditions: {
+                kind: kind,
+                conditions: [{
+                  name: "prop1",
+                  operator: "equalTo",
+                  compareTo: "text",
+                  value: true
+                }, {
+                  name: "prop2",
+                  operator: "notEqualTo",
+                  compareTo: "text",
+                  value: false
+                }]
+              },
+              actions: [{
+                actionName: "updateField",
+                fieldName: "prop3",
+                updateTo: "success"
+              }]
+            }
+          }]
+        };
 
-      var values = {
-        prop1: false,
-        prop2: true,
-        prop3: "prop3 value",
-        prop4: "prop3 value",
-        prop5: 49,
-        prop6: 42,
-        prop7: ""
-      };
+        var values = {
+          prop1: false,
+          prop2: true,
+          prop3: ""
+        };
 
-      var atCoreForm = document.createElement('at-core-form');
-      atCoreForm.schema = schema;
-      atCoreForm.data = values;
+        var atCoreForm = document.createElement('at-core-form');
+        atCoreForm.schema = schema;
+        atCoreForm.data = values;
 
-      atCoreForm.updateFormElementData('prop1', true);
-      var element = atCoreForm.getElement('prop1');
-      element.fire('value-changed', { value: element.value });
+        atCoreForm.updateFormElementData('prop1', true);
+        var element = atCoreForm.getElement('prop1');
+        element.fire('value-changed', {
+          value: element.value
+        });
 
-      flush(function() {
-        assert.equal(values.prop7, "success", "nested condition evaluation failed");
-        done();
+        flush(function() {
+          assert.equal(atCoreForm.data.prop3, "success", "condition evaluation failed");
+          done();
+        });
+
       });
 
     });
-  });
-
   </script>
 
 </body>
+
 </html>

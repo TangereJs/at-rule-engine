@@ -36,6 +36,12 @@
 
     suite('rules standalone single boolean field', function() {
 
+      /********************************************************************************/
+      /*  Tests for updateField action
+          We test if updateField action correctly updates field value
+          We have a single field in schema, a single condition and a single action
+          We test two condition operators equalTo and notEqualTo
+      /********************************************************************************/
       function updateValueGenericTestFunction(initialValue, operator, compareTo, actionValue, expectedValue, done) {
         var schema = {
           properties: {
@@ -82,6 +88,12 @@
         });
       }
 
+      /*
+        initial value of the field is false
+        in condition we check if value is equal to false
+        in action we update value to true
+        we expect that we read the value of true from the data
+      */
       test('boolean (checkbox/toggle): value false -> condition equalTo false -> action updateValue true', function(done) {
         var initialValue = false;
         var operator = "equalTo";
@@ -122,6 +134,19 @@
         updateValueGenericTestFunction(initialValue, operator, operatorCompareTo, actionUpdateTo, expectedValue, done);
       });
 
+      /********************************************************************************/
+      /*  tests for setFieldState action
+          From rule engine point of view, element state is "optional", "disabled", "required", "hidden".
+          These states are exclusive from rules perspective. So if element is initially required, setFieldState = optional sets required to false.
+
+          Its assumed that element won't have "disabled" and "hidden" true at the same time.
+          It that is the case, setFieldState "optional" will set one to false according following:
+          If element has disabled, required and hide all set to true, setFieldState = Optional will set
+          disabled to false first, than required set to false then hide set to false.
+
+          We have a single field in schema, a single condition and a single action
+          we test different combinations of (disabled,required,hidden)
+      /********************************************************************************/
       function setFieldStateGenericTestFunction (initialState, expectedState, setToState, done) {
         var schema = {
           properties: {
@@ -170,7 +195,9 @@
           done();
         });
       }
-
+      /*
+        if element (disabled, required, hidden) is initially (false, false, false) setFieldState = optional should keep them all false
+      */
       test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, false, false) -> action setFieldState optional', function(done) {
         var initialState = {
           disabled: false,
@@ -186,7 +213,10 @@
 
         setFieldStateGenericTestFunction(initialState, expectedState, setToState, done);
       });
-
+      /*
+        if element (disabled, required, hidden) is initially (true, true, true) setFieldState = optional should produce (false, true, true)
+        (true, true, true) is not really valid from rule point of view so disabled should be false but required and hide should remain true
+      */
       test('boolean (checkbox/toggle): (disabled, required, hidden) = (true, true, true) -> action setFieldState optional', function(done) {
         var initialState = {
           disabled: true,
@@ -202,7 +232,10 @@
 
         setFieldStateGenericTestFunction(initialState, expectedState, setToState, done);
       });
-
+      /*
+        if element (disabled, required, hidden) is initially (false, true, true) setFieldState = optional should produce (false, false, true)
+        (false, true, true) is not really valid from rule point of view so required should be false but hide should remain true and disabled unchanged
+      */
       test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, true, true) -> action setFieldState optional', function(done) {
         var initialState = {
           disabled: false,
@@ -218,7 +251,10 @@
 
         setFieldStateGenericTestFunction(initialState, expectedState, setToState, done);
       });
-
+      /*
+        if element (disabled, required, hidden) is initially (false, false, true) setFieldState = optional should produce (false, false, false)
+        (false, false, true) is valid from rule point of view so hide should be false and disabled and required should remain unchanged
+      */
       test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, false, true) -> action setFieldState optional', function(done) {
         var initialState = {
           disabled: false,
@@ -234,7 +270,9 @@
 
         setFieldStateGenericTestFunction(initialState, expectedState, setToState, done);
       });
-
+      /*
+        if element (disabled, required, hidden) is initially (false, false, false) setFieldState = disabled should produce (true, false, false)
+      */
       test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, false, false) -> action setFieldState disabled', function(done) {
         var initialState = {
           disabled: false,
@@ -250,7 +288,9 @@
 
         setFieldStateGenericTestFunction(initialState, expectedState, setToState, done);
       });
-
+      /*
+        if element (disabled, required, hidden) is initially (false, false, false) setFieldState = required should produce (false, true, false)
+      */
       test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, false, false) -> action setFieldState required', function(done) {
         var initialState = {
           disabled: false,
@@ -266,7 +306,9 @@
 
         setFieldStateGenericTestFunction(initialState, expectedState, setToState, done);
       });
-
+      /*
+        if element (disabled, required, hidden) is initially (false, false, false) setFieldState = hidden should produce (false, false, true)
+      */
       test('boolean (checkbox/toggle): (disabled, required, hidden) = (false, false, false) -> action setFieldState hidden', function(done) {
         var initialState = {
           disabled: false,
@@ -283,6 +325,11 @@
         setFieldStateGenericTestFunction(initialState, expectedState, setToState, done);
       });
 
+      /********************************************************************************/
+      /*  tests for setFieldError action
+
+          We have a single field in schema, a single condition and a single action
+      /********************************************************************************/
       function setFieldErrorGenericTestFunction (initialError, setToError, expectedError, done) {
         var schema = {
           properties: {
@@ -329,21 +376,27 @@
           done();
         });
       }
-
+      /*
+          initialError is empty; we set non empty error; error messages must match and element must be invalid
+       */
       test('boolean (checkbox/toggle): (initialError, setToError, expectedError) = ("", "lorem ipsum", "lorem ipsum") -> action setFieldError', function(done) {
         var initialError = "";
         var setToError = "lorem ipsum";
         var expectedError = "lorem ipsum";
         setFieldErrorGenericTestFunction(initialError, setToError, expectedError, done);
       });
-
+      /*
+          initialError is non empty; we set empty error; error message must match empty string and element must be valid
+       */
       test('boolean (checkbox/toggle): (initialError, setToError, expectedError) = ("lorem ipsum", "", "") -> action setFieldError', function(done) {
         var initialError = "lorem ipsum";
         var setToError = "";
         var expectedError = "";
         setFieldErrorGenericTestFunction(initialError, setToError, expectedError, done);
       });
-
+      /*
+          initialError is non empty; we set different non empty error; error messages must match and element must be invalid
+       */
       test('boolean (checkbox/toggle): (initialError, setToError, expectedError) = ("lorem ipsum", "ipsum lorem", "ipsum lorem") -> action setFieldError', function(done) {
         var initialError = "lorem ipsum";
         var setToError = "";
@@ -354,7 +407,11 @@
     });
 
     suite('rules standalone two boolean fields', function() {
+      /********************************************************************************/
+      /*  tests for copyFieldValue action
 
+          We have two fields in schema, a single condition and a single action
+      /********************************************************************************/
       function copyFieldValueGenericTestFunction(field1, field2, done) {
         var schema = {
           properties: {
@@ -410,7 +467,9 @@
           done();
         });
       }
-
+      /*
+        initially field1 one is true, field2 is false, copyFieldValue copies field1 to field2, expectedResult is field1 true, field2 true
+       */
       test('boolean (checkbox/toggle): copyFieldValue action (field1: true, field2: false) -> (field1: true, field2: true)', function (done) {
         var field1 = {
           initialValue: true,
@@ -423,7 +482,9 @@
 
         copyFieldValueGenericTestFunction(field1, field2, done);
       });
-
+      /*
+        initially field1 one is false, field2 is true, copyFieldValue copies field1 to field2, expectedResult is field1 false, field2 false
+       */
       test('boolean (checkbox/toggle): copyFieldValue action (field1: false, field2: true) -> (field1: false, field2: false)', function (done) {
         var field1 = {
           initialValue: false,
@@ -441,6 +502,13 @@
 
     suite('rules standalone All/Any/None conditions test', function() {
 
+      /********************************************************************************/
+      /*  tests for all/any/none in conditions
+
+          We have three fields in schema, a two condition and a single action
+          third field's value is updated if result of condition evaluation is true
+          we assert third field's value
+      /********************************************************************************/
       function allAnyNoneGenericTestFunction(kind, field1, field2, done) {
         var schema = {
           properties: {
@@ -510,7 +578,9 @@
         });
 
       }
-
+      /*
+          test: all conditions must evaluate to true
+       */
       test('all conditions test', function (done) {
         var kind = "all";
 
@@ -529,7 +599,9 @@
         allAnyNoneGenericTestFunction(kind, field1, field2, done);
 
       });
-
+      /*
+          test: at least one of the conditions must evaluate to true
+       */
       test('any conditions test', function (done) {
         var kind = "any";
 
@@ -548,7 +620,9 @@
         allAnyNoneGenericTestFunction(kind, field1, field2, done);
 
       });
-
+      /*
+          test: all conditions must evaluate to false
+       */
       test('none conditions test', function (done) {
         var kind = "none";
 
@@ -567,7 +641,12 @@
         allAnyNoneGenericTestFunction(kind, field1, field2, done);
 
       });
-
+      /*
+          test: for nested conditions
+          we have seven fields; a parent "all" condition and [ all, any and none] child conditions
+          we have a single action which sets seventh field's value to success
+          conditions should evaluate to true; we assert seventh field's value
+       */
       test('all/any/none nested conditions test', function (done) {
 
         var schema = {
@@ -703,7 +782,12 @@
         });
 
       });
-
+      /*
+        test: multiple actions update same field
+        we have three fields and three rules with their sets of conditions and actions
+        all rules have actions that update same field
+        we assert that only the value written by the action of the third rule
+       */
       test('after multiple actions only final value is written into values', function (done) {
         var kind = "all";
 
