@@ -942,6 +942,9 @@ var global = this;
       var result = isObject(schema) && isObject(schema.properties) && isArray(schema.rules) && isObject(data);
       if (!result) { return result; }
 
+      var dataClone = clonePlainObject(data);
+      completeDataFromSchema(schema, dataClone);
+
       var properties = schema.properties;
       var propNames = Object.keys(properties);
       var length = propNames.length;
@@ -955,7 +958,7 @@ var global = this;
       var next = false;
 
       var rulesEvaluator = RulesEvaluator();
-      rulesEvaluator.evaluate(schema, data, schema.rules);
+      rulesEvaluator.evaluate(schema, dataClone, schema.rules);
 
       for (i = 0; i < length && !next; i++) {
         propName = propNames[i];
@@ -965,11 +968,11 @@ var global = this;
           continue;
         }
 
-        if (hasData(propName, data) && isRequired(propDef)) {
+        if (hasData(propName, data, dataClone) && isRequired(propDef)) {
           continue;
         }
 
-        if (!hasData(propName, data) || isRequired(propDef)) {
+        if (!hasData(propName, data, dataClone) || isRequired(propDef)) {
           next = propName;
         }
       }
@@ -977,6 +980,45 @@ var global = this;
       return next;
     }
   };
+
+  function clonePlainObject(obj) {
+    if (obj === null || obj === undefined ) {
+      return obj;
+    }
+
+    var result = {};
+    var propNames = Object.keys(obj);
+    propNames.forEach(function (propName, index) {
+      result[propName] = obj[propName];
+    });
+    return result;
+  }
+
+  function completeDataFromSchema(schema, data) {
+    var properties = schema.properties;
+    var propertyNames = Object.keys(properties);
+    var propDef;
+    var defValue, dataValue;
+
+    propertyNames.forEach(function (propName, index) {
+      propDef = properties[propName];
+
+      defValue = propDef.default;
+      dataValue = data[propName];
+
+      if (notNullOrEmpty(defValue) && isNullOrEmpty(dataValue)) {
+        data[propName] = defValue;
+      }
+    });
+  }
+
+  function notNullOrEmpty(obj) {
+    return obj !== null || obj !== undefined || obj !== "";
+  }
+
+  function isNullOrEmpty(obj) {
+    return obj === null || obj === undefined || obj === "";
+  }
 
   function isRequired(propDef) {
     return parseBool(propDef.required) && !parseBool(propDef.hidden);
@@ -993,7 +1035,7 @@ var global = this;
     return parseBool(propDef.hide);
   }
 
-  function hasData(propName, data) {
+  function hasData(propName, data, dataClone) {
     return data[propName] !== undefined;
   }
 

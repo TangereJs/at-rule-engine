@@ -2,26 +2,18 @@
 <html>
 
 <head>
-
   <title>at-rule-engine tests</title>
-
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
-
   <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
-
   <script src="../../web-component-tester/browser.js"></script>
   <script src="../../iron-test-helpers/test-helpers.js"></script>
   <script src="../../iron-test-helpers/mock-interactions.js"></script>
-
   <link rel="import" href="../at-rule-engine.html">
-
 </head>
 
 <body>
-
-
   <script>
     function formatStr(format, args) {
       // replace {n}
@@ -44,7 +36,7 @@
         var propName = window.RuleEngineUtils.GetNextProperty(schema, data);
         assert.equal(false, propName, 'End of form not detected correctly');
 
-        schema = { };
+        schema = {};
 
         propName = window.RuleEngineUtils.GetNextProperty(schema, data);
         assert.equal(false, propName, 'End of form not detected correctly');
@@ -537,6 +529,105 @@
         propName = window.RuleEngineUtils.GetNextProperty(schema, data);
         assert.equal(false, propName, 'End of form not detected correctly');
       });
+
+      test('non linear form, initial data in schema, rules switch state for former fields', function() {
+        var schema = {
+          properties: {
+            text1: {
+              type: 'string',
+              default: 'lorem ipsum',
+              disabled: false,
+              required: false,
+              hide: false
+            },
+            text2: {
+              type: 'string',
+              default: '',
+              disabled: false,
+              required: false,
+              hide: false
+            },
+            text3: {
+              type: 'string',
+              default: 'lorem ipsum',
+              disabled: false,
+              required: false,
+              hide: false
+            },
+            text4: {
+              type: 'string',
+              default: '',
+              disabled: false,
+              required: false,
+              hide: false
+            },
+            text5: {
+              type: 'string',
+              default: 'lorem ipsum',
+              disabled: false,
+              required: false,
+              hide: false
+            }
+          },
+          rules: [{
+            rule: {
+              conditions: {
+                kind: "all",
+                conditions: [{
+                  name: "text4",
+                  operator: "equalTo",
+                  compareTo: "text",
+                  value: "lorem ipsum"
+                }]
+              },
+              actions: [{
+                actionName: "setFieldState",
+                fieldName: "text1",
+                state: "disabled"
+              }, {
+                actionName: "setFieldState",
+                fieldName: "text2",
+                state: "hidden"
+              }, {
+                actionName: "setFieldState",
+                fieldName: "text3",
+                state: "required"
+              }, {
+                actionName: "setFieldState",
+                fieldName: "text4",
+                state: "optional"
+              }, {
+                actionName: "setFieldState",
+                fieldName: "text5",
+                state: "optional"
+              }]
+            }
+          }]
+        };
+
+        var data = { };
+
+        propName = window.RuleEngineUtils.GetNextProperty(schema, data);
+        assert.equal('text4', propName, 'text4 is not computed as next property');
+        data[propName] = "lorem ipsum";
+
+        schema.properties.text1.default = "";
+        schema.properties.text2.default = "";
+        delete data.text3;
+
+        propName = window.RuleEngineUtils.GetNextProperty(schema, data);
+        assert.equal('text3', propName, 'text3 is not computed as next property');
+        data[propName] = "lorem ipsum";
+
+        propName = window.RuleEngineUtils.GetNextProperty(schema, data);
+        assert.equal('text5', propName, 'text5 is not computed as next property');
+        data[propName] = "lorem ipsum";
+
+        propName = window.RuleEngineUtils.GetNextProperty(schema, data);
+        assert.equal(false, propName, 'End of form not detected correctly');
+      });
+
+
     });
   </script>
 
