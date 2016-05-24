@@ -938,12 +938,19 @@ var global = this;
   };
 
   global.RuleEngineUtils = {
-    GetNextProperty: function (schema, data) {
+    GetNextProperty: function (schema, data, ignoreDefaultParam) {
+      var ignoreDefault = true;
+      if (ignoreDefaultParam !== undefined) {
+        ignoreDefault = ignoreDefaultParam;
+      }
+
       var result = isObject(schema) && isObject(schema.properties) && isArray(schema.rules) && isObject(data);
       if (!result) { return result; }
 
       var dataClone = clonePlainObject(data);
-      completeDataFromSchema(schema, dataClone);
+      if (!ignoreDefault) {
+        completeDataFromSchema(schema, dataClone);
+      }
 
       var properties = schema.properties;
       var propNames = Object.keys(properties);
@@ -968,11 +975,11 @@ var global = this;
           continue;
         }
 
-        if (hasData(propName, data, dataClone) && isRequired(propDef)) {
+        if (hasData(propName, dataClone) && isRequired(propDef)) {
           continue;
         }
 
-        if (!hasData(propName, data, dataClone) || isRequired(propDef)) {
+        if (!hasData(propName, dataClone) || isRequired(propDef)) {
           next = propName;
         }
       }
@@ -1006,18 +1013,18 @@ var global = this;
       defValue = propDef.default;
       dataValue = data[propName];
 
-      if (notNullOrEmpty(defValue) && isNullOrEmpty(dataValue)) {
+      if (notNull(defValue) && isNullOrEmpty(dataValue)) {
         data[propName] = defValue;
       }
     });
   }
 
-  function notNullOrEmpty(obj) {
-    return obj !== null || obj !== undefined || obj !== "";
+  function notNull(obj) {
+    return obj != null;
   }
 
   function isNullOrEmpty(obj) {
-    return obj === null || obj === undefined || obj === "";
+    return obj == null || obj === "";
   }
 
   function isRequired(propDef) {
@@ -1035,7 +1042,7 @@ var global = this;
     return parseBool(propDef.hide);
   }
 
-  function hasData(propName, data, dataClone) {
+  function hasData(propName, data) {
     return data[propName] !== undefined;
   }
 
@@ -1045,6 +1052,4 @@ var global = this;
   function isArray(obj) {
     return Object.prototype.toString.call(obj) === "[object Array]";
   }
-
-
 })();

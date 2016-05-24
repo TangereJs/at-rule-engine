@@ -530,7 +530,362 @@
         assert.equal(false, propName, 'End of form not detected correctly');
       });
 
-      test('non linear form, initial data in schema, rules switch state for former fields', function() {
+      /*
+       * this function is a generic test function which tests a 'static' schema of five fields with empty initial data
+       * fields parameter is an object of objects like fields = { field_id: { default: <def_value>, assign: <assign> } }
+       * default value will be inserted into schema
+       * assign value will be put into data object after each calculated next field
+       * expected order is an array of strings with false at the end; ie: expectedOrder = [ "text1", "text2", false]
+       * false means that form has ended and there are no more fields
+       * string means a field name ie. text1
+       */
+      function GenericLinearFormWithIgnoreDefaultFalseTestFunction(fields, expectedOrder) {
+        var schema = {
+          properties: {
+            text1: {
+              type: 'string',
+              disabled: false,
+              required: false,
+              hide: false
+            },
+            text2: {
+              type: 'string',
+              disabled: false,
+              required: false,
+              hide: false
+            },
+            text3: {
+              type: 'string',
+              disabled: false,
+              required: false,
+              hide: false
+            },
+            text4: {
+              type: 'string',
+              disabled: false,
+              required: false,
+              hide: false
+            },
+            text5: {
+              type: 'string',
+              disabled: false,
+              required: false,
+              hide: false
+            }
+          },
+          rules: [{
+            rule: {
+              conditions: {
+                kind: "all",
+                conditions: [{
+                  name: "text4",
+                  operator: "equalTo",
+                  compareTo: "text",
+                  value: "lorem ipsum"
+                }]
+              },
+              actions: [{
+                actionName: "setFieldState",
+                fieldName: "text1",
+                state: "disabled"
+              }, {
+                actionName: "setFieldState",
+                fieldName: "text2",
+                state: "hidden"
+              }, {
+                actionName: "setFieldState",
+                fieldName: "text3",
+                state: "required"
+              }, {
+                actionName: "setFieldState",
+                fieldName: "text4",
+                state: "optional"
+              }, {
+                actionName: "setFieldState",
+                fieldName: "text5",
+                state: "optional"
+              }]
+            }
+          }]
+        };
+
+        var data = { };
+
+        // give each propDef its default value if its needed
+        var propNames = Object.keys(schema.properties);
+        propNames.forEach(function (propName, index) {
+          var paramPropDef = fields[propName];
+          if (paramPropDef !== undefined && paramPropDef.default !== undefined) {
+            var propDef = schema.properties[propName];
+            propDef.default = paramPropDef.default;
+          }
+        });
+
+        expectedOrder.forEach(function (propName, index) {
+
+          var nextPropName = window.RuleEngineUtils.GetNextProperty(schema, data, false);
+          assert.equal(nextPropName, propName, 'End of form not detected correctly');
+          if (nextPropName && isObject(fields[nextPropName]) && fields[nextPropName].assign !== undefined) {
+            data[nextPropName] = fields[nextPropName].assign;
+          }
+        });
+
+      }
+
+      test('non linear form, no initial data, rules switch state for former fields, ignore default = false', function() {
+
+        /* Part 1
+         * all fields have default value; form should end immidiately
+         */
+        var fields = {
+          text1: {
+            default: ""
+          },
+          text2: {
+            default: ""
+          },
+          text3: {
+            default: ""
+          },
+          text4: {
+            default: ""
+          },
+          text5: {
+            default: ""
+          }
+        };
+
+        var expectedOrder = [false];
+
+        GenericLinearFormWithIgnoreDefaultFalseTestFunction(fields, expectedOrder);
+
+        /* Part 2
+         * text1 doesn't have default value; form should ask for text1 and end
+         */
+        fields = {
+          text1: {
+            assign: "",
+          },
+          text2: {
+            default: "",
+          },
+          text3: {
+            default: ""
+          },
+          text4: {
+            default: ""
+          },
+          text5: {
+            default: ""
+          }
+        };
+
+        expectedOrder = ["text1", false];
+
+        GenericLinearFormWithIgnoreDefaultFalseTestFunction(fields, expectedOrder);
+
+        /* Part 3
+         * text2 doesn't have default value; form should ask for text2 and end
+         */
+        fields = {
+          text1: {
+            default: "",
+          },
+          text2: {
+            assign: "",
+          },
+          text3: {
+            default: ""
+          },
+          text4: {
+            default: ""
+          },
+          text5: {
+            default: ""
+          }
+        };
+
+        expectedOrder = ["text2", false];
+
+        GenericLinearFormWithIgnoreDefaultFalseTestFunction(fields, expectedOrder);
+
+        /* Part 4
+         * text3 doesn't have default value; form should ask for text3 and end
+         */
+       fields = {
+          text1: {
+            default: "",
+          },
+          text2: {
+            default: ""
+          },
+          text3: {
+            assign: "",
+          },
+          text4: {
+            default: ""
+          },
+          text5: {
+            default: ""
+          }
+        };
+
+        expectedOrder = ["text3", false];
+
+        GenericLinearFormWithIgnoreDefaultFalseTestFunction(fields, expectedOrder);
+
+        /* Part 5
+         * text4 doesn't have default value; form should ask for text4 and end
+         */
+        fields = {
+          text1: {
+            default: "",
+          },
+          text2: {
+            default: ""
+          },
+          text3: {
+            default: ""
+          },
+          text4: {
+            assign: "",
+          },
+          text5: {
+            default: ""
+          }
+        };
+
+        var expectedOrder = ["text4", false];
+
+        GenericLinearFormWithIgnoreDefaultFalseTestFunction(fields, expectedOrder);
+
+        /* Part 6
+         * text5 doesn't have default value; form should ask for text5 and end
+         */
+        fields = {
+          text1: {
+            default: ""
+          },
+          text2: {
+            default: ""
+          },
+          text3: {
+            default: ""
+          },
+          text4: {
+            default: ""
+          },
+          text5: {
+            assign: ""
+          }
+        };
+
+        var expectedOrder = ["text5", false];
+
+        GenericLinearFormWithIgnoreDefaultFalseTestFunction(fields, expectedOrder);
+
+        /* Part 7
+         * text1 and text2 do not have default values; form should ask for text1 and text2 and end
+         */
+        fields = {
+          text1: {
+            assign: ""
+          },
+          text2: {
+            assign: ""
+          },
+          text3: {
+            default: ""
+          },
+          text4: {
+            default: ""
+          },
+          text5: {
+            default: ""
+          }
+        };
+
+        var expectedOrder = ["text1", "text2", false];
+
+        GenericLinearFormWithIgnoreDefaultFalseTestFunction(fields, expectedOrder);
+
+        /* Part 8
+         * text1 and text2 and text3 do not have default values; form should ask for text1, text2 and text3 and end
+         */
+        fields = {
+          text1: {
+            assign: ""
+          },
+          text2: {
+            assign: ""
+          },
+          text3: {
+            assign: ""
+          },
+          text4: {
+            default: ""
+          },
+          text5: {
+            default: ""
+          }
+        };
+
+        var expectedOrder = ["text1", "text2", "text3", false];
+
+        GenericLinearFormWithIgnoreDefaultFalseTestFunction(fields, expectedOrder);
+
+        /* Part 9
+         * text1 , text2, text3 and text4 do not have default values; form should ask for text1, text2, text3 and text4 and end
+         */
+        fields = {
+          text1: {
+            assign: ""
+          },
+          text2: {
+            assign: ""
+          },
+          text3: {
+            assign: ""
+          },
+          text4: {
+            assign: ""
+          },
+          text5: {
+            default: ""
+          }
+        };
+
+        var expectedOrder = ["text1", "text2", "text3", "text4", false];
+
+        GenericLinearFormWithIgnoreDefaultFalseTestFunction(fields, expectedOrder);
+
+        /* Part 10
+         * all fields do not have default values; form should ask for all fields and end
+         */
+        fields = {
+          text1: {
+            assign: ""
+          },
+          text2: {
+            assign: ""
+          },
+          text3: {
+            assign: ""
+          },
+          text4: {
+            assign: ""
+          },
+          text5: {
+            assign: ""
+          }
+        };
+
+        var expectedOrder = ["text1", "text2", "text3", "text4", "text5", false];
+
+        GenericLinearFormWithIgnoreDefaultFalseTestFunction(fields, expectedOrder);
+      });
+/*
+      test('non linear form, initial data in schema, rules switch state for former fields, ignore defaults = false', function() {
         var schema = {
           properties: {
             text1: {
@@ -607,7 +962,7 @@
 
         var data = { };
 
-        propName = window.RuleEngineUtils.GetNextProperty(schema, data);
+        propName = window.RuleEngineUtils.GetNextProperty(schema, data, false);
         assert.equal('text4', propName, 'text4 is not computed as next property');
         data[propName] = "lorem ipsum";
 
@@ -626,9 +981,13 @@
         propName = window.RuleEngineUtils.GetNextProperty(schema, data);
         assert.equal(false, propName, 'End of form not detected correctly');
       });
-
+*/
 
     });
+
+    function isObject(obj) {
+      return Object.prototype.toString.call(obj) === "[object Object]";
+    }
   </script>
 
 </body>
