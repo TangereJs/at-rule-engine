@@ -91,35 +91,40 @@
         var schema = {
           properties: {
             text1: {
-              type: 'string',
+              // NOTE (*ij* 25.05.2015 (dd.mm.yyyy):
+              // run the tests without changing the file -> tests pass
+              // use search and replace to uncomment type property
+              // run the tests again -> tests pass
+              // conclusion: for GetNextProperty type/xtype is not relevant and can be safely ignored
+              //type: 'string',
               default: '',
               disabled: false,
               required: false,
               hide: false
             },
             text2: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: false,
               hide: false
             },
             text3: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: false,
               hide: false
             },
             text4: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: false,
               hide: false
             },
             text5: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: false,
@@ -161,35 +166,35 @@
         var schema = {
           properties: {
             text1: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: false,
               hide: false
             },
             text2: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: false,
               hide: false
             },
             text3: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: false,
               hide: false
             },
             text4: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: false,
               hide: false
             },
             text5: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: false,
@@ -224,35 +229,35 @@
         var schema = {
           properties: {
             text1: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: false,
               hide: false
             },
             text2: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: true,
               hide: false
             },
             text3: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: true,
               hide: false
             },
             text4: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: true,
               hide: false
             },
             text5: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: false,
@@ -287,35 +292,35 @@
         var schema = {
           properties: {
             text1: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: false,
               hide: true
             },
             text2: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: true,
               hide: false
             },
             text3: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: true,
               hide: false
             },
             text4: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: true,
               hide: false
             },
             text5: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: true,
               required: false,
@@ -342,35 +347,35 @@
         var schema = {
           properties: {
             text1: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: false,
               hide: false
             },
             text2: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: false,
               hide: false
             },
             text3: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: false,
               hide: false
             },
             text4: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: false,
               hide: false
             },
             text5: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: false,
@@ -433,35 +438,35 @@
         var schema = {
           properties: {
             text1: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: false,
               hide: false
             },
             text2: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: false,
               hide: false
             },
             text3: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: false,
               hide: false
             },
             text4: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: false,
               hide: false
             },
             text5: {
-              type: 'string',
+              //type: 'string',
               default: '',
               disabled: false,
               required: false,
@@ -530,6 +535,97 @@
         assert.equal(false, propName, 'End of form not detected correctly');
       });
 
+      // NOTE: this test tests a linear form that has actions that update field values 'forward'
+
+      // 'forward' meaning that values are updated for the fields that should be computed as 'next'
+      // IE. if fields are text1, text2 and text3 in that order, updating value for text3 is 'forward'
+      // because text1 is first 'next', when computing text2 action will trigger and set value for text3
+
+      // 'backward' field value doesn't affect order of 'next' picking because
+      // updateField action can not affect 'new' or 'required' status of the field
+
+      // field text1 has no default value and no initial value
+      // its computed as first 'next' property; text1 field value is set to lorem ipsum
+      // this triggers updateField actions on second 'next' property evaluation
+      // actions update text2 and text3 fields so they are not computed as 'next' fields
+      // fields text4 and text5 are computed as 'next' and form then ends
+      test('linear form, no initial data, rules update values for latter fields', function() {
+        var schema = {
+          properties: {
+            text1: {
+              //type: 'string',
+              disabled: false,
+              required: false,
+              hide: false
+            },
+            text2: {
+              //type: 'string',
+              disabled: false,
+              required: false,
+              hide: false
+            },
+            text3: {
+              //type: 'string',
+              disabled: false,
+              required: false,
+              hide: false
+            },
+            text4: {
+              //type: 'string',
+              disabled: false,
+              required: false,
+              hide: false
+            },
+            text5: {
+              //type: 'string',
+              disabled: false,
+              required: false,
+              hide: false
+            }
+          },
+          rules: [{
+            rule: {
+              conditions: {
+                kind: "all",
+                conditions: [{
+                  name: "text1",
+                  operator: "equalTo",
+                  compareTo: "text",
+                  value: "lorem ipsum"
+                }]
+              },
+              actions: [{
+                actionName: "updateField",
+                fieldName: "text2",
+                updateTo: "update field 2"
+              }, {
+                actionName: "updateField",
+                fieldName: "text3",
+                updateTo: "update field 3"
+              }]
+            }
+          }]
+        };
+
+        var data = {
+        };
+
+        propName = window.RuleEngineUtils.GetNextProperty(schema, data);
+        assert.equal('text1', propName, 'text1 is not computed as next property');
+        data[propName] = "lorem ipsum";
+
+        propName = window.RuleEngineUtils.GetNextProperty(schema, data);
+        assert.equal('text4', propName, 'text4 is not computed as next property');
+        data[propName] = "lorem ipsum";
+
+        propName = window.RuleEngineUtils.GetNextProperty(schema, data);
+        assert.equal('text5', propName, 'text5 is not computed as next property');
+        data[propName] = "lorem ipsum";
+
+        propName = window.RuleEngineUtils.GetNextProperty(schema, data);
+        assert.equal(false, propName, 'End of form not detected correctly');
+      });
+
       /*
        * this function is a generic test function which tests a 'static' schema of five fields with empty initial data
        * fields parameter is an object of objects like fields = { field_id: { default: <def_value>, assign: <assign> } }
@@ -543,31 +639,31 @@
         var schema = {
           properties: {
             text1: {
-              type: 'string',
+              //type: 'string',
               disabled: false,
               required: false,
               hide: false
             },
             text2: {
-              type: 'string',
+              //type: 'string',
               disabled: false,
               required: false,
               hide: false
             },
             text3: {
-              type: 'string',
+              //type: 'string',
               disabled: false,
               required: false,
               hide: false
             },
             text4: {
-              type: 'string',
+              //type: 'string',
               disabled: false,
               required: false,
               hide: false
             },
             text5: {
-              type: 'string',
+              //type: 'string',
               disabled: false,
               required: false,
               hide: false
@@ -632,7 +728,7 @@
 
       }
 
-      test('non linear form, no initial data, rules switch state for former fields, ignore default = false', function() {
+      test('running ones/zeros type test for non linear form, no initial data, rules switch state for former fields, ignore default = false', function() {
 
         /* Part 1
          * all fields have default value; form should end immidiately
@@ -884,40 +980,50 @@
 
         GenericLinearFormWithIgnoreDefaultFalseTestFunction(fields, expectedOrder);
       });
-/*
+
       test('non linear form, initial data in schema, rules switch state for former fields, ignore defaults = false', function() {
         var schema = {
           properties: {
+            // text1 has default value and (disabled, required, hide) = (false, false, false)
+            // this field is not new so it should be skipped
             text1: {
-              type: 'string',
+              //type: 'string',
               default: 'lorem ipsum',
               disabled: false,
               required: false,
               hide: false
             },
+            // text2 has default value and (disabled, required, hide) = (false, true, false)
+            // this field is required but already has a value so it should be skipped
             text2: {
-              type: 'string',
-              default: '',
+              //type: 'string',
+              default: 'ipsum lorem',
               disabled: false,
+              required: true,
+              hide: false
+            },
+            // text3 has default value and (disabled, required, hide) = (true, false, false)
+            // this field is disabled so it should be skipped
+            text3: {
+              //type: 'string',
+              default: 'lorem ipsum',
+              disabled: true,
               required: false,
               hide: false
             },
-            text3: {
-              type: 'string',
+            // text4 has default value and (disabled, required, hide) = (false, false, true)
+            // this field is hidden so it should be skipped
+            text4: {
+              //type: 'string',
               default: 'lorem ipsum',
               disabled: false,
               required: false,
-              hide: false
+              hide: true
             },
-            text4: {
-              type: 'string',
-              default: '',
-              disabled: false,
-              required: false,
-              hide: false
-            },
+            // text5 has default value and (disabled, required, hide) = (false, false, false)
+            // this field should be skipped
             text5: {
-              type: 'string',
+              //type: 'string',
               default: 'lorem ipsum',
               disabled: false,
               required: false,
@@ -962,26 +1068,9 @@
 
         var data = { };
 
-        propName = window.RuleEngineUtils.GetNextProperty(schema, data, false);
-        assert.equal('text4', propName, 'text4 is not computed as next property');
-        data[propName] = "lorem ipsum";
-
-        schema.properties.text1.default = "";
-        schema.properties.text2.default = "";
-        delete data.text3;
-
-        propName = window.RuleEngineUtils.GetNextProperty(schema, data);
-        assert.equal('text3', propName, 'text3 is not computed as next property');
-        data[propName] = "lorem ipsum";
-
-        propName = window.RuleEngineUtils.GetNextProperty(schema, data);
-        assert.equal('text5', propName, 'text5 is not computed as next property');
-        data[propName] = "lorem ipsum";
-
-        propName = window.RuleEngineUtils.GetNextProperty(schema, data);
+        var propName = window.RuleEngineUtils.GetNextProperty(schema, data, false);
         assert.equal(false, propName, 'End of form not detected correctly');
       });
-*/
 
     });
 
