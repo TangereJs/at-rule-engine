@@ -315,14 +315,11 @@ var global = this;
           var fieldId = data.fieldName;
           var errorMessage = data.errorMessage;
           var field = _schema.properties[fieldId];
+          
+          field.errorMessage = errorMessage;
 
-          // there are elements that do not have error message like at-form-section
-          if (field.errorMessage !== undefined) {
-            field.errorMessage = errorMessage;
-
-            var clearErrorMessageAction = ClearErrorMessageAction(field);
-            _undoActionsList.push(clearErrorMessageAction);
-          }
+          var clearErrorMessageAction = ClearErrorMessageAction(field);
+          _undoActionsList.push(clearErrorMessageAction);
         },
         /**
          * when conditions are not satisfied undo the actions
@@ -518,9 +515,7 @@ var global = this;
             // field[previousState.changedState] = false;
             field[previousState.originalState] = true;
 
-            if (field.errorMessage !== undefined) {
-              field.errorMessage = '';
-            }
+            field.errorMessage = '';
           });
         }
       },
@@ -598,7 +593,7 @@ var global = this;
         var errorMessage = data.errorMessage;
         var complex = formArray._getElementFromForm(itemPosition);
         var field = complex.getElement(fieldId);
-        if (field && field.errorMessage !== undefined) {
+        if (field) {
           field.errorMessage = errorMessage;
         }
       }
@@ -688,7 +683,7 @@ var global = this;
           fieldIds = Object.keys(complexValue);
           fieldIds.forEach(function(fieldId, index) {
             var field = coreForm.getElement(fieldId);
-            if (field && field.errorMessage !== undefined) {
+            if (field) {
               field.errorMessage = '';
             }
           });
@@ -778,7 +773,7 @@ var global = this;
         var fieldId = data.fieldName;
         var errorMessage = data.errorMessage;
         var field = coreForm.getElement(fieldId);
-        if (field && field.errorMessage !== undefined) {
+        if (field) {
           field.errorMessage = errorMessage;
         }
       }
@@ -886,7 +881,7 @@ var global = this;
         var errorMessage = data.errorMessage;
         var field = coreForm.getElement(fieldId);
 
-        if (field && field.errorMessage !== undefined) {
+        if (field) {
           field.errorMessage = errorMessage;
 
           var clearErrorMessageAction = ClearErrorMessageAction(field);
@@ -930,9 +925,7 @@ var global = this;
 
     return {
       execute: function() {
-        if (_field.errorMessage !== undefined) {
-          _field.errorMessage = "";
-        }
+        _field.errorMessage = "";
       }
     };
   };
