@@ -70,19 +70,26 @@
         };
 
         var atCoreForm = document.createElement('at-core-form');
+        
+        atCoreForm.addEventListener('rendered', function(){ 
+          atCoreForm.data = values;
+
+          atCoreForm.updateFormElementData('prop1', updateTo);
+          var element = atCoreForm.getElement('prop1');
+          element.fire('value-changed', {
+            value: element.value
+          });
+
+          flush(function() {
+    
+            assert.equal(values.prop1, expectedValue, "prop1 value is not updated correctly");
+            done();
+          });
+        });
+
         atCoreForm.schema = schema;
-        atCoreForm.data = values;
 
-        atCoreForm.updateFormElementData('prop1', updateTo);
-        var element = atCoreForm.getElement('prop1');
-        element.fire('value-changed', {
-          value: element.value
-        });
 
-        flush(function() {
-          assert.equal(values.prop1, expectedValue, "prop1 value is not updated correctly");
-          done();
-        });
       }
 
       /*  initial value of the field is true
@@ -610,21 +617,25 @@
         };
 
         var atCoreForm = document.createElement('at-core-form');
+
+        atCoreForm.addEventListener('rendered', function() { 
+          atCoreForm.data = values;
+
+          atCoreForm.updateFormElementData('prop1', field1.initialValue);
+          atCoreForm.updateFormElementData('prop2', field2.initialValue);
+          var element = atCoreForm.getElement('prop1');
+          element.fire('value-changed', {
+            value: element.value
+          });
+
+          flush(function() {
+            assert.equal(values.prop3, "success", "condition evaluation failed");
+            done();
+          });
+        });
+
         atCoreForm.schema = schema;
-        atCoreForm.data = values;
-
-        atCoreForm.updateFormElementData('prop1', field1.initialValue);
-        atCoreForm.updateFormElementData('prop2', field2.initialValue);
-        var element = atCoreForm.getElement('prop1');
-        element.fire('value-changed', {
-          value: element.value
-        });
-
-        flush(function() {
-          assert.equal(values.prop3, "success", "condition evaluation failed");
-          done();
-        });
-
+        
       }
       /*
           test: all conditions must evaluate to true
@@ -825,20 +836,23 @@
         };
 
         var atCoreForm = document.createElement('at-core-form');
+
+        atCoreForm.addEventListener('rendered', function(){ 
+          atCoreForm.data = values;
+                  
+          atCoreForm.updateFormElementData('prop1', true);
+          var element = atCoreForm.getElement('prop1');
+          element.fire('value-changed', {
+            value: element.value
+          });
+
+          flush(function() {
+            assert.equal(values.prop7, "success", "nested condition evaluation failed");
+            done();
+          });
+        });
+
         atCoreForm.schema = schema;
-        atCoreForm.data = values;
-
-        atCoreForm.updateFormElementData('prop1', true);
-        var element = atCoreForm.getElement('prop1');
-        element.fire('value-changed', {
-          value: element.value
-        });
-
-        flush(function() {
-          assert.equal(values.prop7, "success", "nested condition evaluation failed");
-          done();
-        });
-
       });
 
       /*
