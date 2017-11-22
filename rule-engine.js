@@ -35,6 +35,16 @@ var global = this;
       var r = target.replace(/^\/|\/$/g, "");
       var regex = new RegExp(r);
       return regex.test("" + actual);
+    },
+    ifChanged: function(actual, target) {
+      console.log(`ifchanged: actual ${actual}, target ${target}`);
+      var result = "" + actual !== "" + target;
+      return result;
+    },
+    ifNotChanged: function(actual, target) {
+      console.log(`ifnotchanged: actual ${actual}, target ${target}`);
+      var result = "" + actual === "" + target;
+      return result;
     }
   };
 
@@ -52,17 +62,17 @@ var global = this;
   RuleEngine.prototype = {
     run: function(conditionsAdapter, actionsAdapter, cb) {
       var out, error, _this = this;
-      this.matches(conditionsAdapter, function(err, result) {
+      this.evaluateConditions(conditionsAdapter, function(err, result) {
         out = result;
         error = err;
-        if (result && !err) _this.runActions(actionsAdapter);
+        if (result && !err) _this.executeActions(actionsAdapter);
         if (cb) cb(err, result);
       });
       if (error) throw error;
       return out;
     },
 
-    matches: function(conditionsAdapter, cb) {
+    evaluateConditions: function(conditionsAdapter, cb) {
       var out, err;
       handleNode(this.conditions, conditionsAdapter, this, function(e, result) {
         if (e) {
@@ -108,7 +118,7 @@ var global = this;
       }
     },
 
-    runActions: function(actionsAdapter) {
+    executeActions: function(actionsAdapter) {
       for (var i = 0; i < this.actions.length; i++) {
         var actionData = this.actions[i];
         var actionName = actionData.actionName;
