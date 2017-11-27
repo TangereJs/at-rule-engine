@@ -1,0 +1,165 @@
+<!doctype html>
+<html>
+
+<head>
+
+  <title>at-rule-engine tests</title>
+
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <script src="../../web-component-tester/browser.js"></script>
+  <script src="../../iron-test-helpers/test-helpers.js"></script>
+  <script src="../../iron-test-helpers/mock-interactions.js"></script>
+
+  <link rel="import" href="../at-rule-engine.html">
+</head>
+<body>
+  <script>
+    suite('tests with nested conditions', function() {
+
+      /*
+        We are testing a case with nested conditions where kind for both is all / all
+        We set values in dataAdapter to trigger the operators
+        We assert the expected value for whole rule
+      */
+      test('testing all / all', function() {
+        var rule = {
+          conditions: {
+            kind: "all",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: undefined
+            }, {
+              kind: "all",
+              conditions: [{
+                name: "prop2",
+                operator: "ifNotChanged",
+                compareTo: "text",
+                value: undefined
+              }]
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: undefined,
+          prop2: undefined
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = null;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop2 = null;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      /*
+        We are testing a case with nested conditions where kind for both is any / any
+        We set values in dataAdapter to trigger the operators
+        We assert the expected value for whole rule
+      */    
+      test('testing any / any', function() {
+        var rule = {
+          conditions: {
+            kind: "any",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: undefined
+            }, {
+              kind: "any",
+              conditions: [{
+                name: "prop2",
+                operator: "ifNotChanged",
+                compareTo: "text",
+                value: undefined
+              }]
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: undefined,
+          prop2: undefined
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = null;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop2 = null;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      /*
+        We are testing a case with nested conditions where kind for both is none / none
+        We set values in dataAdapter to trigger the operators
+        We assert the expected value for whole rule
+      */
+      test('testing none / none', function() {
+        var rule = {
+          conditions: {
+            kind: "none",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: undefined
+            }, {
+              kind: "none",
+              conditions: [{
+                name: "prop2",
+                operator: "ifNotChanged",
+                compareTo: "text",
+                value: undefined
+              }]
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: undefined,
+          prop2: undefined
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = null;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop2 = null;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+    });
+  </script>
+</body>
+</html>

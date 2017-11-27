@@ -1,0 +1,1899 @@
+<!doctype html>
+<html>
+
+<head>
+
+  <title>at-rule-engine tests</title>
+
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <script src="../../web-component-tester/browser.js"></script>
+  <script src="../../iron-test-helpers/test-helpers.js"></script>
+  <script src="../../iron-test-helpers/mock-interactions.js"></script>
+
+  <link rel="import" href="../at-rule-engine.html">
+</head>
+<body>
+  <script>
+    suite('tests where kind is all and operator is ifchanged', function() {
+      /*
+        We fix kind to all, we fix operator to ifChanged
+        We set initial value in each test to one of [ undefined, null, "", "lorem", "ipsum", true, false, 0, 42, [], {} ]
+        We set expected value in each test to one of [ null, "", "lorem", "ipsum", true, false, 0, 42, [], {}, undefined ]
+        We assert the expected value for ifchanged operator
+      */
+      test('testing undefined', function() {
+        var rule = {
+          conditions: {
+            kind: "all",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: undefined
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: undefined
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = null;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+      });
+
+      test('testing null ', function() {
+        var rule = {
+          conditions: {
+            kind: "all",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: null
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: null
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = "";
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      test('testing empty string', function() {
+        var rule = {
+          conditions: {
+            kind: "all",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: ""
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: ""
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = "lorem";
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      test('testing lorem', function() {
+        var rule = {
+          conditions: {
+            kind: "all",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: "lorem"
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: "lorem"
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = "ipsum";
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      test('testing ipsum', function() {
+        var rule = {
+          conditions: {
+            kind: "all",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: "ipsum"
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: "ipsum"
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = true;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      test('testing true', function() {
+        var rule = {
+          conditions: {
+            kind: "all",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: true
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: true
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = false;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      test('testing false', function() {
+        var rule = {
+          conditions: {
+            kind: "all",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: false
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: false
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = 0;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      test('testing 0', function() {
+        var rule = {
+          conditions: {
+            kind: "all",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: 0
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: 0
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = 42;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      test('testing 42', function() {
+        var rule = {
+          conditions: {
+            kind: "all",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: 42
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: 42
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = [];
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      test('testing array', function() {
+        var rule = {
+          conditions: {
+            kind: "all",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: []
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: []
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = {};
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      test('testing object', function() {
+        var rule = {
+          conditions: {
+            kind: "all",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: {}
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: {}
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = undefined;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+    });
+
+    // 
+    // 
+    // kind is any, operator ifChanged
+    // 
+    // 
+  
+    suite('tests where kind is any and operator is ifchanged', function() {
+
+      /*
+        We fix kind to any, we fix operator to ifChanged
+        We set initial value in each test to one of [ undefined, null, "", "lorem", "ipsum", true, false, 0, 42, [], {} ]
+        We set expected value in each test to one of [ null, "", "lorem", "ipsum", true, false, 0, 42, [], {}, undefined ]
+        We assert the expected value for ifchanged operator
+      */
+
+      test('testing undefined', function() {
+        var rule = {
+          conditions: {
+            kind: "any",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: undefined
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: undefined
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = null;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+      });
+
+      test('testing null ', function() {
+        var rule = {
+          conditions: {
+            kind: "any",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: null
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: null
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = "";
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      test('testing empty string', function() {
+        var rule = {
+          conditions: {
+            kind: "any",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: ""
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: ""
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = "lorem";
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      test('testing lorem', function() {
+        var rule = {
+          conditions: {
+            kind: "any",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: "lorem"
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: "lorem"
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = "ipsum";
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      test('testing ipsum', function() {
+        var rule = {
+          conditions: {
+            kind: "any",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: "ipsum"
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: "ipsum"
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = true;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      test('testing true', function() {
+        var rule = {
+          conditions: {
+            kind: "any",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: true
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: true
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = false;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      test('testing false', function() {
+        var rule = {
+          conditions: {
+            kind: "any",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: false
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: false
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = 0;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      test('testing 0', function() {
+        var rule = {
+          conditions: {
+            kind: "any",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: 0
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: 0
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = 42;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      test('testing 42', function() {
+        var rule = {
+          conditions: {
+            kind: "any",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: 42
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: 42
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = [];
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      test('testing array', function() {
+        var rule = {
+          conditions: {
+            kind: "any",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: []
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: []
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = {};
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      test('testing object', function() {
+        var rule = {
+          conditions: {
+            kind: "any",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: {}
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: {}
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = undefined;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+    });
+
+    // 
+    // 
+    // kind is none, operator ifChanged
+    // 
+    // 
+
+    suite('tests where kind is none and operator is ifchanged', function() {
+
+      /*
+        We fix kind to none, we fix operator to ifChanged
+        We set initial value in each test to one of [ undefined, null, "", "lorem", "ipsum", true, false, 0, 42, [], {} ]
+        We set expected value in each test to one of [ null, "", "lorem", "ipsum", true, false, 0, 42, [], {}, undefined ]
+        We assert the expected value for ifchanged operator
+      */
+
+      test('testing undefined', function() {
+        var rule = {
+          conditions: {
+            kind: "none",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: undefined
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: undefined
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = null;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+      });
+
+      test('testing null ', function() {
+        var rule = {
+          conditions: {
+            kind: "none",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: null
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: null
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = "";
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      test('testing empty string', function() {
+        var rule = {
+          conditions: {
+            kind: "none",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: ""
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: ""
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = "lorem";
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      test('testing lorem', function() {
+        var rule = {
+          conditions: {
+            kind: "none",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: "lorem"
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: "lorem"
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = "ipsum";
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      test('testing ipsum', function() {
+        var rule = {
+          conditions: {
+            kind: "none",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: "ipsum"
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: "ipsum"
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = true;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      test('testing true', function() {
+        var rule = {
+          conditions: {
+            kind: "none",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: true
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: true
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = false;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      test('testing false', function() {
+        var rule = {
+          conditions: {
+            kind: "none",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: false
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: false
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = 0;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      test('testing 0', function() {
+        var rule = {
+          conditions: {
+            kind: "none",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: 0
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: 0
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = 42;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      test('testing 42', function() {
+        var rule = {
+          conditions: {
+            kind: "none",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: 42
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: 42
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = [];
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      test('testing array', function() {
+        var rule = {
+          conditions: {
+            kind: "none",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: []
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: []
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = {};
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      test('testing object', function() {
+        var rule = {
+          conditions: {
+            kind: "none",
+            conditions: [{
+              name: "prop1",
+              operator: "ifChanged",
+              compareTo: "text",
+              value: {}
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: {}
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = undefined;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+    });
+
+    // 
+    // 
+    // kind is all operator, is ifnotchanged
+    // 
+    // 
+
+    suite('tests where kind is all and operator is ifnotchanged', function() {
+
+      /*
+        We fix kind to all, we fix operator to ifNotChanged
+        We set initial value in each test to one of [ undefined, null, "", "lorem", "ipsum", true, false, 0, 42, [], {} ]
+        We set expected value in each test to one of [ null, "", "lorem", "ipsum", true, false, 0, 42, [], {}, undefined ]
+        We assert the expected value for ifchanged operator
+      */
+
+      test('testing undefined', function() {
+        var rule = {
+          conditions: {
+            kind: "all",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: undefined
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: undefined
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = null;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+      });
+
+      test('testing null ', function() {
+        var rule = {
+          conditions: {
+            kind: "all",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: null
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: null
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = "";
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      test('testing empty string', function() {
+        var rule = {
+          conditions: {
+            kind: "all",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: ""
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: ""
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = "lorem";
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      test('testing lorem', function() {
+        var rule = {
+          conditions: {
+            kind: "all",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: "lorem"
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: "lorem"
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = "ipsum";
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      test('testing ipsum', function() {
+        var rule = {
+          conditions: {
+            kind: "all",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: "ipsum"
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: "ipsum"
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = true;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      test('testing true', function() {
+        var rule = {
+          conditions: {
+            kind: "all",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: true
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: true
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = false;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      test('testing false', function() {
+        var rule = {
+          conditions: {
+            kind: "all",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: false
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: false
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = 0;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      test('testing 0', function() {
+        var rule = {
+          conditions: {
+            kind: "all",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: 0
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: 0
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = 42;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      test('testing 42', function() {
+        var rule = {
+          conditions: {
+            kind: "all",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: 42
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: 42
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = [];
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      test('testing array', function() {
+        var rule = {
+          conditions: {
+            kind: "all",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: []
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: []
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = {};
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      test('testing object', function() {
+        var rule = {
+          conditions: {
+            kind: "all",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: {}
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: {}
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = undefined;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+    });
+
+    // 
+    // 
+    // kind is any, operator ifNotChanged
+    // 
+    // 
+  
+    suite('tests where kind is any and operator is ifnotchanged', function() {
+
+      /*
+        We fix kind to any, we fix operator to ifNotChanged
+        We set initial value in each test to one of [ undefined, null, "", "lorem", "ipsum", true, false, 0, 42, [], {} ]
+        We set expected value in each test to one of [ null, "", "lorem", "ipsum", true, false, 0, 42, [], {}, undefined ]
+        We assert the expected value for ifchanged operator
+      */
+
+      test('testing undefined', function() {
+        var rule = {
+          conditions: {
+            kind: "any",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: undefined
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: undefined
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = null;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+      });
+
+      test('testing null ', function() {
+        var rule = {
+          conditions: {
+            kind: "any",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: null
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: null
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = "";
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      test('testing empty string', function() {
+        var rule = {
+          conditions: {
+            kind: "any",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: ""
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: ""
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = "lorem";
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      test('testing lorem', function() {
+        var rule = {
+          conditions: {
+            kind: "any",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: "lorem"
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: "lorem"
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = "ipsum";
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      test('testing ipsum', function() {
+        var rule = {
+          conditions: {
+            kind: "any",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: "ipsum"
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: "ipsum"
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = true;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      test('testing true', function() {
+        var rule = {
+          conditions: {
+            kind: "any",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: true
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: true
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = false;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      test('testing false', function() {
+        var rule = {
+          conditions: {
+            kind: "any",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: false
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: false
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = 0;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      test('testing 0', function() {
+        var rule = {
+          conditions: {
+            kind: "any",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: 0
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: 0
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = 42;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      test('testing 42', function() {
+        var rule = {
+          conditions: {
+            kind: "any",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: 42
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: 42
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = [];
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      test('testing array', function() {
+        var rule = {
+          conditions: {
+            kind: "any",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: []
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: []
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = {};
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+
+      test('testing object', function() {
+        var rule = {
+          conditions: {
+            kind: "any",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: {}
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: {}
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+        dataAdapter.prop1 = undefined;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+      });
+    });
+
+    // 
+    // 
+    // kind is none, operator ifNotChanged
+    // 
+    // 
+
+    suite('tests where kind is none and operator is ifnotchanged', function() {
+      
+      /*
+        We fix kind to none, we fix operator to ifNotChanged
+        We set initial value in each test to one of [ undefined, null, "", "lorem", "ipsum", true, false, 0, 42, [], {} ]
+        We set expected value in each test to one of [ null, "", "lorem", "ipsum", true, false, 0, 42, [], {}, undefined ]
+        We assert the expected value for ifchanged operator
+      */
+
+      test('testing undefined', function() {
+        var rule = {
+          conditions: {
+            kind: "none",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: undefined
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: undefined
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = null;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+
+      });
+
+      test('testing null ', function() {
+        var rule = {
+          conditions: {
+            kind: "none",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: null
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: null
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = "";
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      test('testing empty string', function() {
+        var rule = {
+          conditions: {
+            kind: "none",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: ""
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: ""
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = "lorem";
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      test('testing lorem', function() {
+        var rule = {
+          conditions: {
+            kind: "none",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: "lorem"
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: "lorem"
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = "ipsum";
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      test('testing ipsum', function() {
+        var rule = {
+          conditions: {
+            kind: "none",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: "ipsum"
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: "ipsum"
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = true;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      test('testing true', function() {
+        var rule = {
+          conditions: {
+            kind: "none",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: true
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: true
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = false;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      test('testing false', function() {
+        var rule = {
+          conditions: {
+            kind: "none",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: false
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: false
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = 0;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      test('testing 0', function() {
+        var rule = {
+          conditions: {
+            kind: "none",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: 0
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: 0
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = 42;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      test('testing 42', function() {
+        var rule = {
+          conditions: {
+            kind: "none",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: 42
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: 42
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = [];
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      test('testing array', function() {
+        var rule = {
+          conditions: {
+            kind: "none",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: []
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: []
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = {};
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+
+      test('testing object', function() {
+        var rule = {
+          conditions: {
+            kind: "none",
+            conditions: [{
+              name: "prop1",
+              operator: "ifNotChanged",
+              compareTo: "text",
+              value: {}
+            }]
+          }
+        };
+
+        var dataAdapter = {
+          prop1: {}
+        };
+
+        var ruleEngine = new RuleEngine(rule);
+        var result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, false);
+
+        dataAdapter.prop1 = undefined;
+
+        result = ruleEngine.evaluateConditions(dataAdapter);
+        assert.equal(result, true);
+      });
+    });
+  </script>
+</body>
+</html>
