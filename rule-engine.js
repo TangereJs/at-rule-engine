@@ -37,12 +37,10 @@ var global = this;
       return regex.test("" + actual);
     },
     ifChanged: function(actual, target) {
-      console.log(`ifchanged: actual ${actual}, target ${target}`);
       var result = "" + actual !== "" + target;
       return result;
     },
     ifNotChanged: function(actual, target) {
-      console.log(`ifnotchanged: actual ${actual}, target ${target}`);
       var result = "" + actual === "" + target;
       return result;
     }
