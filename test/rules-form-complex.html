@@ -70,19 +70,20 @@
         };
 
         var atFormComplex = document.createElement('at-form-complex');
-        atFormComplex.schema = schema;
-        atFormComplex.value = values;
+        atFormComplex.addEventListener('rendered', function() {
+          atFormComplex.value = values;
 
-        atFormComplex.updateFormElementValue('prop1', updateTo);
-        var element = atFormComplex.getElement('prop1');
-        element.fire('value-changed', {
-          value: element.value
-        });
+          atFormComplex.updateFormElementValue('prop1', updateTo);
+          var element = atFormComplex.getElement('prop1');
+          element.fire('value-changed', {
+            value: element.value
+          });
 
-        flush(function() {
           assert.equal(values.prop1, expectedValue, "prop1 value is not updated correctly");
           done();
         });
+        
+        atFormComplex.schema = schema;
       }
 
       /*  initial value of the field is true
@@ -188,22 +189,23 @@
 
 
         var atFormComplex = document.createElement('at-form-complex');
-        atFormComplex.schema = schema;
-        atFormComplex.value = values;
+        atFormComplex.addEventListener('rendered', function() {
+          atFormComplex.value = values;
 
-        atFormComplex.updateFormElementValue('prop1', false);
-        var element = atFormComplex.getElement('prop1');
-        element.fire('value-changed', {
-          value: element.value
-        });
-        var propDef = atFormComplex._activeSchema.properties.prop1;
+          atFormComplex.updateFormElementValue('prop1', false);
+          var element = atFormComplex.getElement('prop1');
+          element.fire('value-changed', {
+            value: element.value
+          });
+          var propDef = atFormComplex._activeSchema.properties.prop1;
 
-        flush(function() {
           assert.equal(propDef.disabled, expectedState.disabled, "prop1 disabled is not updated correctly");
           assert.equal(propDef.required, expectedState.required, "prop1 required is not updated correctly");
           assert.equal(propDef.hide, expectedState.hidden, "prop1 hide is not updated correctly");
           done();
         });
+
+        atFormComplex.schema = schema;
       }
 
       /*
@@ -386,20 +388,22 @@
         };
 
         var atFormComplex = document.createElement('at-form-complex');
-        atFormComplex.schema = schema;
-        atFormComplex.value = values;
+        atFormComplex.addEventListener('rendered', function() {
+          atFormComplex.value = values;
 
-        atFormComplex.updateFormElementValue('prop1', false);
-        var element = atFormComplex.getElement('prop1');
-        element.fire('value-changed', {
-          value: element.value
-        });
+          atFormComplex.updateFormElementValue('prop1', false);
+          var element = atFormComplex.getElement('prop1');
+          element.fire('value-changed', {
+            value: element.value
+          });
 
-        var propDef = atFormComplex._activeSchema.properties.prop1;
-        flush(function() {
+          var propDef = atFormComplex._activeSchema.properties.prop1;
+          
           assert.equal(propDef.errorMessage, expectedError, "prop1 error message is not updated correctly");
           done();
         });
+        
+        atFormComplex.schema = schema;
       }
 
       /*
@@ -489,21 +493,21 @@
         };
 
         var atFormComplex = document.createElement('at-form-complex');
-        atFormComplex.schema = schema;
-        atFormComplex.value = values;
+        atFormComplex.addEventListener('rendered', function() {
+          atFormComplex.value = values;
 
-        atFormComplex.updateFormElementValue('prop1', field1.initialValue);
-        atFormComplex.updateFormElementValue('prop2', field2.initialValue);
-        var element = atFormComplex.getElement('prop1');
-        element.fire('value-changed', {
-          value: element.value
-        });
+          atFormComplex.updateFormElementValue('prop1', field1.initialValue);
+          atFormComplex.updateFormElementValue('prop2', field2.initialValue);
+          var element = atFormComplex.getElement('prop1');
+          element.fire('value-changed', {
+            value: element.value
+          });
 
-        flush(function() {
           assert.equal(values.prop1, field1.expectedValue, "prop1 value is not updated correctly");
           assert.equal(values.prop2, field2.expectedValue, "prop1 value is not updated correctly");
           done();
         });
+        atFormComplex.schema = schema;
       }
       /*
         initially field1 one is true, field2 is false, copyFieldValue copies field1 to field2, expectedResult is field1 true, field2 true
@@ -609,21 +613,20 @@
         };
 
         var atFormComplex = document.createElement('at-form-complex');
-        atFormComplex.schema = schema;
-        atFormComplex.value = values;
+        atFormComplex.addEventListener('rendered', function() {
+          atFormComplex.value = values;
 
-        atFormComplex.updateFormElementValue('prop1', field1.initialValue);
-        atFormComplex.updateFormElementValue('prop2', field2.initialValue);
-        var element = atFormComplex.getElement('prop1');
-        element.fire('value-changed', {
-          value: element.value
-        });
+          atFormComplex.updateFormElementValue('prop1', field1.initialValue);
+          atFormComplex.updateFormElementValue('prop2', field2.initialValue);
+          var element = atFormComplex.getElement('prop1');
+          element.fire('value-changed', {
+            value: element.value
+          });
 
-        flush(function() {
           assert.equal(values.prop3, "success", "condition evaluation failed");
           done();
         });
-
+        atFormComplex.schema = schema;
       }
       /*
           test: all conditions must evaluate to true
@@ -823,20 +826,19 @@
         };
 
         var atFormComplex = document.createElement('at-form-complex');
-        atFormComplex.schema = schema;
-        atFormComplex.value = values;
+        atFormComplex.addEventListener('rendered', function() {
+          atFormComplex.value = values;
 
-        atFormComplex.updateFormElementValue('prop1', true);
-        var element = atFormComplex.getElement('prop1');
-        element.fire('value-changed', {
-          value: element.value
-        });
+          atFormComplex.updateFormElementValue('prop1', true);
+          var element = atFormComplex.getElement('prop1');
+          element.fire('value-changed', {
+            value: element.value
+          });
 
-        flush(function() {
           assert.equal(values.prop7, "success", "nested condition evaluation failed");
           done();
         });
-
+        atFormComplex.schema = schema;
       });
       /*
         test: multiple actions update same field
@@ -956,20 +958,19 @@
         };
 
         var atFormComplex = document.createElement('at-form-complex');
-        atFormComplex.schema = schema;
-        atFormComplex.value = values;
+        atFormComplex.addEventListener('rendered', function() {
+          atFormComplex.value = values;
 
-        atFormComplex.updateFormElementValue('prop1', true);
-        var element = atFormComplex.getElement('prop1');
-        element.fire('value-changed', {
-          value: element.value
-        });
+          atFormComplex.updateFormElementValue('prop1', true);
+          var element = atFormComplex.getElement('prop1');
+          element.fire('value-changed', {
+            value: element.value
+          });
 
-        flush(function() {
           assert.equal(atFormComplex.value.prop3, "success", "condition evaluation failed");
           done();
         });
-
+        atFormComplex.schema = schema;
       });
 
     });
