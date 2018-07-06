@@ -70,7 +70,9 @@
         };
 
         var atCoreForm = document.createElement('at-core-form');
-        
+        document.body.appendChild(atCoreForm);
+        document.body.removeChild(atCoreForm);
+
         atCoreForm.addEventListener('rendered', function(){ 
           atCoreForm.data = values;
 
@@ -88,8 +90,6 @@
         });
 
         atCoreForm.schema = schema;
-
-
       }
 
       /*  initial value of the field is true
@@ -195,22 +195,25 @@
 
 
         var atCoreForm = document.createElement('at-core-form');
-        atCoreForm.schema = schema;
-        atCoreForm.data = values;
+        atCoreForm.addEventListener('rendered', function() {
+          atCoreForm.updateFormElementData('prop1', false);
+          var element = atCoreForm.getElement('prop1');
+          element.fire('value-changed', {
+            value: element.value
+          });
+          var propDef = atCoreForm._activeSchema.properties.prop1;
 
-        atCoreForm.updateFormElementData('prop1', false);
-        var element = atCoreForm.getElement('prop1');
-        element.fire('value-changed', {
-          value: element.value
-        });
-        var propDef = atCoreForm._activeSchema.properties.prop1;
-
-        flush(function() {
           assert.equal(propDef.disabled, expectedState.disabled, "prop1 disabled is not updated correctly");
           assert.equal(propDef.required, expectedState.required, "prop1 required is not updated correctly");
           assert.equal(propDef.hide, expectedState.hidden, "prop1 hide is not updated correctly");
           done();
         });
+
+        atCoreForm.schema = schema;
+        atCoreForm.data = values;
+
+        document.body.appendChild(atCoreForm);
+        document.body.removeChild(atCoreForm);
       }
       /*
         if element (disabled, required, hidden) is initially (false, false, false) setFieldState = optional should keep them all false
@@ -393,6 +396,9 @@
         };
 
         var atCoreForm = document.createElement('at-core-form');
+        document.body.appendChild(atCoreForm);
+        document.body.removeChild(atCoreForm);
+        
         atCoreForm.schema = schema;
         atCoreForm.data = values;
 
@@ -497,6 +503,9 @@
         };
 
         var atCoreForm = document.createElement('at-core-form');
+        document.body.appendChild(atCoreForm);
+        document.body.removeChild(atCoreForm);
+
         atCoreForm.schema = schema;
         atCoreForm.data = values;
 
@@ -617,6 +626,8 @@
         };
 
         var atCoreForm = document.createElement('at-core-form');
+        document.body.appendChild(atCoreForm);
+        document.body.removeChild(atCoreForm);
 
         atCoreForm.addEventListener('rendered', function() { 
           atCoreForm.data = values;
@@ -836,6 +847,8 @@
         };
 
         var atCoreForm = document.createElement('at-core-form');
+        document.body.appendChild(atCoreForm);
+        document.body.removeChild(atCoreForm);
 
         atCoreForm.addEventListener('rendered', function(){ 
           atCoreForm.data = values;
@@ -973,6 +986,9 @@
         };
 
         var atCoreForm = document.createElement('at-core-form');
+        document.body.appendChild(atCoreForm);
+        document.body.removeChild(atCoreForm);
+        
         atCoreForm.schema = schema;
         atCoreForm.data = values;
 
