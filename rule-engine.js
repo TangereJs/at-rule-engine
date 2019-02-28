@@ -10,7 +10,7 @@ var global = this;
     blank: function(actual, target) {
       return !actual;
     },
-    equalTo: function(actual, target) {
+    equalTo: function (actual, target) {      
       return "" + actual === "" + target;
     },
     notEqualTo: function(actual, target) {
@@ -213,16 +213,13 @@ var global = this;
     delete global.RuleEngine;
   }
 
-  /**
-   * Updated code from AT-22 for AT-129
-   */
 
    function parseBool(value) {
      var result = Boolean(value);
      // Boolean("true") = true and Boolean("false") = true because Boolean("non empty string") = true
      // so if value === "false" assign bool literal false
-     result = value === "false" ? false : result;
-
+     result = (value === "false" || value === "0" || value === 0) ? false : result;
+     
      return result;
    }
 
@@ -286,12 +283,16 @@ var global = this;
             _undoActionsList.push(restoreFieldStateAction);
           }
 
+          // *todo* logic is incomplete -- where is optional? all but hide should have hide false, require should remove disabled,  more testing needed
           restoreFieldStateAction = false;
           if (val === "disabled") {
             field.disabled = true;
+            field.hide = false;
             restoreFieldStateAction = RestoreFieldStateAction(field, 'disabled', false);
           } else if (val === "required") {
             field.required = true;
+            field.disabled = false;
+            field.hide = false;
             restoreFieldStateAction = RestoreFieldStateAction(field, 'required', false);
           } else if (val === "hidden") {
             field.hide = true;
